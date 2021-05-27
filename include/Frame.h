@@ -32,13 +32,13 @@
 
 #include <opencv2/opencv.hpp>
 
-
+#include "depth_segmentation.h"
 #include "LSDextractor.h"
 #include "MapLine.h"
 #include "3DLineExtractor.h"
 #include "auxiliar.h"
 #include <fstream>
-
+#include "common.h"
 #include "Config.h"
 #include "MapPlane.h"
 #include "PlaneExtractor.h"
@@ -94,6 +94,11 @@ namespace ORB_SLAM2
         void ExtractLSD(const cv::Mat &im);
 
         void ExtractPlanes(const cv::Mat &imRGB, const cv::Mat &imDepth, const cv::Mat &K, const float &depthMapFactor);
+
+        void ExtractInseg(const cv::Mat& rgb_image, const cv::Mat& depth_image,
+                          const cv::Mat& depth_intrinsics,
+                          Params& params);
+
 
         void GetLineDepth(const cv::Mat &imDepth);
 

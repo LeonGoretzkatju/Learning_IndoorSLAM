@@ -164,6 +164,8 @@ namespace ORB_SLAM2 {
         thread threadPoints(&ORB_SLAM2::Frame::ExtractORB, this, 0, imGray);
         thread threadLines(&ORB_SLAM2::Frame::ExtractLSD, this, imGray);
         thread threadPlanes(&ORB_SLAM2::Frame::ExtractPlanes, this, imRGB, imDepth, K, depthMapFactor);
+        Params params_;
+        ExtractInseg(imRGB,imDepth,K,params_);
         threadPoints.join();
         threadLines.join();
         threadPlanes.join();
@@ -994,6 +996,105 @@ namespace ORB_SLAM2 {
 //        }
 //
 //        PlaneViewer::cloudPoints = printCloud;
+    }
+
+    void Frame::ExtractInseg(const cv::Mat& rgb_image, const cv::Mat& depth_image,
+                             const cv::Mat& depth_intrinsics,Params& params)
+    {
+        cout<<"ss"<<endl;
+
+        cv::Mat* label_map;
+        cv::Mat * normal_map;
+        std::vector<cv::Mat>segment_masks;
+
+        std::vector<Segment> segments;
+//
+//        LOG(INFO)<<"segmentSingleFrame";
+//        CHECK(!rgb_image.empty());
+//        CHECK(!depth_image.empty());
+//        CHECK_NOTNULL(label_map);
+//        CHECK_NOTNULL(normal_map);
+//        CHECK_NOTNULL(segment_masks);
+//        CHECK_NOTNULL(segments);
+
+
+        DepthCamera depth_camera;
+        DepthSegmenter depth_segmenter(depth_camera, params);
+        cout<<"ss"<<endl;
+        depth_camera.initialize(depth_image.rows, depth_image.cols, CV_32FC1,
+                                depth_intrinsics);
+        depth_segmenter.initialize();
+        cout<<"ss"<<endl;
+        cv::Mat rescaled_depth = cv::Mat(depth_image.size(), CV_32FC1);
+        if (depth_image.type() == CV_16UC1) {
+            cv::rgbd::rescaleDepth(depth_image, CV_32FC1, rescaled_depth);
+        } else if (depth_image.type() != CV_32FC1) {
+            cout<< "Depth image is of unknown type.";
+        } else {
+            rescaled_depth = depth_image;
+        }
+        cout<<"ss"<<endl;
+        // Compute depth map from rescaled depth image.
+        cv::Mat depth_map(rescaled_depth.size(), CV_32FC3);
+        depth_segmenter.computeDepthMap(rescaled_depth, &depth_map);
+        cout<<"computeDepthMap ss"<<endl;
+        // Compute normals based on specified method.
+        cv::Mat normal = cv::Mat(depth_map.size(), CV_32FC3, 0.0f);
+        cout<<"computeDepthMap normal 1"<<endl;
+        cout<<depth_map.size()<<endl;
+        normal_map= &normal;
+        cout<<"computeDepthMap normal 1"<<endl;
+        //*normal_map = cv::Mat(depth_map.size(), CV_32FC3, 0.0f);
+        cout<<"computeDepthMap normal"<<endl;
+        if (params.normals.method ==
+            SurfaceNormalEstimationMethod::kFals ||
+            params.normals.method ==
+            SurfaceNormalEstimationMethod::kSri ||
+            params.normals.method ==
+            SurfaceNormalEstimationMethod::
+            kDepthWindowFilter) {
+            depth_segmenter.computeNormalMap(depth_map, normal_map);
+        } else if (params.normals.method ==
+                   SurfaceNormalEstimationMethod::kLinemod) {
+            depth_segmenter.computeNormalMap(depth_image, normal_map);
+        }
+
+        // Compute depth discontinuity map.
+        cv::Mat discontinuity_map = cv::Mat::zeros(rescaled_depth.size(), CV_32FC1);
+        if (params.depth_discontinuity.use_discontinuity) {
+            depth_segmenter.computeDepthDiscontinuityMap(rescaled_depth,
+                                                         &discontinuity_map);
+        }
+        cout<<"computeDepthMap convexity_map"<<endl;
+        // Compute maximum distance map.
+        cv::Mat distance_map = cv::Mat::zeros(rescaled_depth.size(), CV_32FC1);
+        if (params.max_distance.use_max_distance) {
+            depth_segmenter.computeMaxDistanceMap(depth_map, &distance_map);
+        }
+
+        // Compute minimum convexity map.
+        cv::Mat convexity_map = cv::Mat::zeros(rescaled_depth.size(), CV_32FC1);
+        if (params.min_convexity.use_min_convexity) {
+            depth_segmenter.computeMinConvexityMap(depth_map, *normal_map,
+                                                   &convexity_map);
+        }
+        cout<<"computeDepthMap convexity_map"<<endl;
+
+        // Compute final edge map.
+        cv::Mat edge_map(rescaled_depth.size(), CV_32FC1);
+        depth_segmenter.computeFinalEdgeMap(convexity_map, distance_map,
+                                            discontinuity_map, &edge_map);
+        cout<<"computeDepthMap convexity_map"<<endl;
+
+        // Label the remaning segments.
+        cv::Mat remove_no_values = cv::Mat::zeros(edge_map.size(), edge_map.type());
+        edge_map.copyTo(remove_no_values, rescaled_depth == rescaled_depth);
+        edge_map = remove_no_values;
+        cout<<"computeDepthMap labelMap"<<endl;
+        depth_segmenter.labelMap(rgb_image, rescaled_depth, depth_map, edge_map,
+                                 *normal_map, label_map, &segment_masks, &segments);
+        cout<<"computeDepthMap labelMap"<<endl;
+
     }
 
     cv::Mat Frame::ComputePlaneWorldCoeff(const int &idx) {

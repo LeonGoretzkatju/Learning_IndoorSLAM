@@ -90,7 +90,9 @@ add_library(${PROJECT_NAME} SHARED
         src/PlaneMatcher.cpp
         src/SurfelFusion.cpp
         src/SurfelMapping.cpp
-        )
+        src/depth_segmentation.cpp
+        include/common.h
+        src/common.cpp)
 file(GLOB sources "*.cpp")
 target_link_libraries(${PROJECT_NAME}
         ${OpenCV_LIBS}
