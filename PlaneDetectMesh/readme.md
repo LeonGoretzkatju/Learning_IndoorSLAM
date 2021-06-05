@@ -1,5 +1,7 @@
 ### This is the project  used for plane segmentstion using the RANSAC based on the Open3d
 
+![teaser](./figure/teaser.png)
+
 This project is the baseline for the plane segmentation, the project still have many drawbacks, for example, It  is lack of the intelligence to select the real plane from the hole scene
 
 If you want to use the project, you can compile it and run the command as follows:
