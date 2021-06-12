@@ -28,56 +28,141 @@ PlaneDetection::~PlaneDetection()
 {
 
 }
+double getAngleTwoVectors(const Eigen::Vector3d & v1, const Eigen::Vector3d & v2) {
+    double radian_angle = atan2(v1.cross(v2).norm(), v1.transpose() * v2);
+    return radian_angle;   //[0,PI]
+}
 bool PlaneDetection::readMeshFile(string filename)
 {
+    clock_t startTime,endTime;
+    startTime = clock();
     int vertex_idx = 0;
     int maxIdentifyPoints = 1200;
     std::vector< std::vector<int> > membership;
     auto cloud_ptr = std::make_shared<geometry::PointCloud>();
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    auto normalOutPlane = std::shared_ptr<open3d::geometry::PointCloud>();
+    auto normalInPlane = std::shared_ptr<open3d::geometry::PointCloud>();
+    auto exceptPlane = std::shared_ptr<open3d::geometry::PointCloud>();
+//    auto outPlane = std::shared_ptr<open3d::geometry::PointCloud>();
+//    auto normal = std::make_shared<geometry::PointCloud>();
     if (io::ReadPointCloud(filename, *cloud_ptr)) {
         utility::LogInfo("Successfully read {}", filename);
     } else {
         utility::LogWarning("Failed to read {}", filename);
         return 1;
     }
-    cloud_ptr->NormalizeNormals();
-    visualization::Visualizer visualizer;
-    auto outPlane = std::shared_ptr<open3d::geometry::PointCloud>();
-    int i = 0;
-    std::vector<Eigen::Vector3d> vColorInPlane; // = {0, 0, 255};
+//    cloud_ptr->NormalizeNormals();
+    startTime = clock();
 
-    while (std::get<1>(cloud_ptr->SegmentPlane(0.05,3,100)).size() >= maxIdentifyPoints)
+//    cloud_ptr = std::get<0>(cloud_ptr->RemoveRadiusOutliers(20,0.2));
+    cloud_ptr = cloud_ptr->UniformDownSample(15);
+//    cloud_ptr = cloud_ptr->VoxelDownSample(0.1);
+//    cloud_ptr = std::get<0>(cloud_ptr->RemoveRadiusOutliers(5,0.2));
+    cloud_ptr = std::get<0>(cloud_ptr->RemoveStatisticalOutliers(20,1.5));
+    visualization::Visualizer visualizer;
+    int i = 0;
+    int maxIteration = 5;
+    int maxLoopIteration = 15;
+    double deltaAngleThreshold = 0.01;
+    std::vector<Eigen::Vector3d> vColorInPlane; // = {0, 0, 255};
+    std::vector<size_t> normalInliers;
+    vector<Eigen::Matrix<double, 3, 1>> normalVector;
+//    while (std::get<1>(cloud_ptr->SegmentPlane(0.05,3,100)).size() >= maxIdentifyPoints)
+//    while (std::get<1>(cloud_ptr->SegmentPlane(0.05,3,100)).size() >= maxIdentifyPoints)
+    for(int w = 0; w < maxLoopIteration; w++)
     {
         i++;
         int color_index = i%6;
-        std::tuple<Eigen::Vector4d, std::vector<size_t>> Result = cloud_ptr->SegmentPlane(0.1, 300, 100);
-        Eigen::Vector4d parameter = std::get<0>(Result);
+        cloud_ptr->NormalizeNormals();
+        cloud_ptr->EstimateNormals(geometry::KDTreeSearchParamHybrid(0.01,30));
+        auto base = cloud_ptr->normals_[rng()%cloud_ptr->normals_.size()];
+//        auto base = cloud_ptr->normals_[0];
+        for (size_t idx = 0; idx < cloud_ptr->normals_.size(); ++idx) {
+            double resultAngle = getAngleTwoVectors(base,cloud_ptr->normals_[idx]);
+//            cout << "result Angle" << "               " << resultAngle << endl;
+            if (resultAngle <= deltaAngleThreshold)
+            {
+//                cout << "enter here" << endl;
+                normalInliers.emplace_back(idx);
+                normalVector.emplace_back(cloud_ptr->normals_[idx]);
+//                cloud_ptr->points_.erase(cloud_ptr->points_.begin()+idx-1);
+            }
+        }
+        for (int ite = 0; ite < maxIteration; ++ite) {
+            auto baseIte = normalVector[rng()%normalVector.size()];
+            for (int m = 0; m < cloud_ptr->normals_.size(); ++m) {
+                if (getAngleTwoVectors(baseIte,cloud_ptr->normals_[m]) <= deltaAngleThreshold)
+                {
+//                cout << "enter here" << endl;
+                    normalInliers.emplace_back(m);
+                    normalVector.emplace_back(cloud_ptr->points_[m]);
+//                    cloud_ptr->points_.erase(cloud_ptr->points_.begin()+m-1);
+                }
+            }
+        }
+//        normal->points_.assign(normalVector.begin(),normalVector.end());
+        cout << "normalInliersSize" << "     " << normalInliers.size() << endl;
+//        cout << "normalPoints size" << "     " << normal->points_.size() << endl;
+        if (normalInliers.size() <= 800)
+        {
+            continue;
+        }
+        normalInPlane = cloud_ptr->SelectByIndex(normalInliers, false);
+        normalOutPlane = cloud_ptr->SelectByIndex(normalInliers, true);
 
-        std::vector<size_t> selectIndex = std::get<1>(Result);
-        std::shared_ptr<open3d::geometry::PointCloud> inPlane = cloud_ptr->SelectByIndex(selectIndex, false);
-
+        std::tuple<Eigen::Vector4d, std::vector<size_t>> Result = normalInPlane->SegmentPlane(0.05,3,100);
+//        std::tuple<Eigen::Vector4d, std::vector<size_t>> ResultNormal = normal->SegmentPlane(1,3,100);
+//        std::tuple<Eigen::Vector4d, std::vector<size_t>> Result = cloud_ptr->SegmentPlane(0.1, 300, 100);
+//        Eigen::Vector4d parameter = std::get<0>(Result);
+//        std::vector<size_t> normalIndex = std::get<1>(ResultNormal);
+//        std::shared_ptr<open3d::geometry::PointCloud> normalinPlane = cloud_ptr->SelectByIndex(normalIndex, false);
+        std::vector<size_t> normalSelectIndex = std::get<1>(Result);
+        cout << "normalSelectIndex" << " " << normalSelectIndex.size() << endl;
+        exceptPlane = normalInPlane->SelectByIndex(normalSelectIndex, true);
+        normalInPlane = normalInPlane->SelectByIndex(normalSelectIndex, false);
+//        auto exceptNormalInPlane = normalInPlane->SelectByIndex(normalSelectIndex, true);
+        *normalOutPlane += *exceptPlane;
+        cout << "stop at here" << endl;
+        Eigen::Vector3d c = { 0,0,255 };
+        Eigen::Vector3d d = {255,0,0};
+//        normal->PaintUniformColor(c);
+//        normalInPlane->PaintUniformColor(c);
+//        normalOutPlane->PaintUniformColor(d);
+//        visualization::DrawGeometries({cloud_ptr},"plane",1600,900,50,50, true);
+//        visualization::DrawGeometries({normal},"plane after iteration",1600,900);
         // save ply files
-        open3d::io::WritePointCloud(to_string(i)+"mesh_.ply", *inPlane);
-
-        // add color to each plane region
+//        open3d::io::WritePointCloud(to_string(i)+"mesh_.ply", *inPlane);
+//
+//        // add color to each plane region
         double r = xjRandom(0, 200);
         double g = xjRandom(100, 256/2);
         double b = xjRandom(50/2, 250);
         r /= 255.0;
         g /= 255.0;
         b /= 255.0;
-        Eigen::Vector3d c = { r,g,b };
-        inPlane->PaintUniformColor(c);
-
-        outPlane = cloud_ptr->SelectByIndex(selectIndex, true);
+        Eigen::Vector3d e = { r,g,b };
+        normalInPlane->PaintUniformColor(e);
         const Eigen::Vector3d colorOutPlane = {255, 0, 0};
-        outPlane->PaintUniformColor(colorOutPlane);
+        normalOutPlane->PaintUniformColor(colorOutPlane);
+//
+//        outPlane = cloud_ptr->SelectByIndex(selectIndex, true);
+//        const Eigen::Vector3d colorOutPlane = {255, 0, 0};
+//        outPlane->PaintUniformColor(colorOutPlane);
         visualizer.CreateVisualizerWindow("Open3D", 1600, 900);
-        visualizer.AddGeometry(inPlane);
-        cloud_ptr = outPlane;
+        visualizer.AddGeometry(normalInPlane);
+        cloud_ptr = normalOutPlane;
+        normalInliers.clear();
+        normalVector.clear();
+//        default_delete<shared_ptr<geometry::PointCloud>> normalOutPlane;
+//        cloud_ptr = outPlane;
     }
-    visualizer.AddGeometry(outPlane);
+    endTime = clock();//计时结束
+    cout << "The run time is:" <<(double)(endTime - startTime) / CLOCKS_PER_SEC << "s" << endl;
+    visualizer.AddGeometry(normalOutPlane);
     visualizer.Run();
+
     return true;
 }
 
