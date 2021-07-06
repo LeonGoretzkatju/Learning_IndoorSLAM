@@ -14,7 +14,7 @@
 #define xjRandom(a,b) (rand()%(b-a)+a)
 
 //Eigen
-#include "Eigen/Dense"
+//#include "Eigen/Dense"
 
 //Open3D
 
@@ -45,6 +45,7 @@ bool PlaneDetection::readMeshFile(string filename)
     auto normalOutPlane = std::shared_ptr<open3d::geometry::PointCloud>();
     auto normalInPlane = std::shared_ptr<open3d::geometry::PointCloud>();
     auto exceptPlane = std::shared_ptr<open3d::geometry::PointCloud>();
+//    vector<shared_ptr<open3d::geometry::PointCloud>> normalPlaneStore;
 //    auto outPlane = std::shared_ptr<open3d::geometry::PointCloud>();
 //    auto normal = std::make_shared<geometry::PointCloud>();
     if (io::ReadPointCloud(filename, *cloud_ptr)) {
@@ -63,12 +64,18 @@ bool PlaneDetection::readMeshFile(string filename)
     cloud_ptr = std::get<0>(cloud_ptr->RemoveStatisticalOutliers(20,1.5));
     visualization::Visualizer visualizer;
     int i = 0;
-    int maxIteration = 5;
-    int maxLoopIteration = 15;
-    double deltaAngleThreshold = 0.01;
+    int qualifiedPlane = 0;
+    int planeCount = 0;
+    int maxIteration = 5; // 5
+    int maxLoopIteration = 15; // 15
+    int normalInliersThreshold = 1000;
+    int normalSelectIndexThreshold = 500;
+    double deltaAngleThreshold = 0.002;
     std::vector<Eigen::Vector3d> vColorInPlane; // = {0, 0, 255};
     std::vector<size_t> normalInliers;
     vector<Eigen::Matrix<double, 3, 1>> normalVector;
+    std::vector<Eigen::Matrix<double, 4, 1>> paramaterPlaneVector;
+//    Eigen::Matrix<double, 4, 1> parametersPlane;
 //    while (std::get<1>(cloud_ptr->SegmentPlane(0.05,3,100)).size() >= maxIdentifyPoints)
 //    while (std::get<1>(cloud_ptr->SegmentPlane(0.05,3,100)).size() >= maxIdentifyPoints)
     for(int w = 0; w < maxLoopIteration; w++)
@@ -76,7 +83,7 @@ bool PlaneDetection::readMeshFile(string filename)
         i++;
         int color_index = i%6;
         cloud_ptr->NormalizeNormals();
-        cloud_ptr->EstimateNormals(geometry::KDTreeSearchParamHybrid(0.01,30));
+        cloud_ptr->EstimateNormals(geometry::KDTreeSearchParamHybrid(0.008,25));
         auto base = cloud_ptr->normals_[rng()%cloud_ptr->normals_.size()];
 //        auto base = cloud_ptr->normals_[0];
         for (size_t idx = 0; idx < cloud_ptr->normals_.size(); ++idx) {
@@ -97,7 +104,7 @@ bool PlaneDetection::readMeshFile(string filename)
                 {
 //                cout << "enter here" << endl;
                     normalInliers.emplace_back(m);
-                    normalVector.emplace_back(cloud_ptr->points_[m]);
+                    normalVector.emplace_back(cloud_ptr->normals_[m]);
 //                    cloud_ptr->points_.erase(cloud_ptr->points_.begin()+m-1);
                 }
             }
@@ -105,13 +112,12 @@ bool PlaneDetection::readMeshFile(string filename)
 //        normal->points_.assign(normalVector.begin(),normalVector.end());
         cout << "normalInliersSize" << "     " << normalInliers.size() << endl;
 //        cout << "normalPoints size" << "     " << normal->points_.size() << endl;
-        if (normalInliers.size() <= 800)
+        if (normalInliers.size() <= normalInliersThreshold)
         {
             continue;
         }
         normalInPlane = cloud_ptr->SelectByIndex(normalInliers, false);
         normalOutPlane = cloud_ptr->SelectByIndex(normalInliers, true);
-
         std::tuple<Eigen::Vector4d, std::vector<size_t>> Result = normalInPlane->SegmentPlane(0.05,3,100);
 //        std::tuple<Eigen::Vector4d, std::vector<size_t>> ResultNormal = normal->SegmentPlane(1,3,100);
 //        std::tuple<Eigen::Vector4d, std::vector<size_t>> Result = cloud_ptr->SegmentPlane(0.1, 300, 100);
@@ -119,11 +125,23 @@ bool PlaneDetection::readMeshFile(string filename)
 //        std::vector<size_t> normalIndex = std::get<1>(ResultNormal);
 //        std::shared_ptr<open3d::geometry::PointCloud> normalinPlane = cloud_ptr->SelectByIndex(normalIndex, false);
         std::vector<size_t> normalSelectIndex = std::get<1>(Result);
+        if (normalSelectIndex.size() < normalSelectIndexThreshold)
+        {
+            continue;
+        }
+        planeCount++;
+        Eigen::Vector4d parametersPlane = std::get<0>(Result);
+        cout << "parameter of the detect plane" << parametersPlane << endl;
+        paramaterPlaneVector.emplace_back(parametersPlane);
+        cout << "size of the plane parameter vector" << paramaterPlaneVector.size() << endl;
         cout << "normalSelectIndex" << " " << normalSelectIndex.size() << endl;
+        cout << "This is the" << planeCount << "th plane match the need" << endl;
         exceptPlane = normalInPlane->SelectByIndex(normalSelectIndex, true);
         normalInPlane = normalInPlane->SelectByIndex(normalSelectIndex, false);
 //        auto exceptNormalInPlane = normalInPlane->SelectByIndex(normalSelectIndex, true);
         *normalOutPlane += *exceptPlane;
+//        normalPlaneStore.push_back(normalInPlane);
+        qualifiedPlane ++ ;
         cout << "stop at here" << endl;
         Eigen::Vector3d c = { 0,0,255 };
         Eigen::Vector3d d = {255,0,0};
@@ -160,8 +178,11 @@ bool PlaneDetection::readMeshFile(string filename)
     }
     endTime = clock();//计时结束
     cout << "The run time is:" <<(double)(endTime - startTime) / CLOCKS_PER_SEC << "s" << endl;
+    cout << "Total good plane" << "  " << planeCount << endl;
     visualizer.AddGeometry(normalOutPlane);
     visualizer.Run();
+//    paramaterPlaneVector.clear();
+//    normalPlaneStore.clear();
 
     return true;
 }

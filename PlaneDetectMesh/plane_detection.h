@@ -19,6 +19,7 @@
 
 using namespace std;
 using namespace open3d;
+using namespace Eigen;
 
 class PlaneDetection
 {
