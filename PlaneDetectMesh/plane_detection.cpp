@@ -32,6 +32,13 @@ double getAngleTwoVectors(const Eigen::Vector3d & v1, const Eigen::Vector3d & v2
     double radian_angle = atan2(v1.cross(v2).norm(), v1.transpose() * v2);
     return radian_angle;   //[0,PI]
 }
+
+double judgePlaneSimilarity(const Eigen::Vector4d & v1, const Eigen::Vector4d & v2) {
+    double residual = sqrt((v1[0]-v2[0])*(v1[0]-v2[0]) + (v1[1]-v2[1])*(v1[1]-v2[1]) +
+                                   (abs(v1[2])-abs(v2[2]))*(abs(v1[2])-abs(v2[2])) + (v1[3]-v2[3])*(v1[3]-v2[3]) );
+    return residual;
+}
+
 bool PlaneDetection::readMeshFile(string filename)
 {
     clock_t startTime,endTime;
@@ -45,7 +52,7 @@ bool PlaneDetection::readMeshFile(string filename)
     auto normalOutPlane = std::shared_ptr<open3d::geometry::PointCloud>();
     auto normalInPlane = std::shared_ptr<open3d::geometry::PointCloud>();
     auto exceptPlane = std::shared_ptr<open3d::geometry::PointCloud>();
-//    vector<shared_ptr<open3d::geometry::PointCloud>> normalPlaneStore;
+    vector<shared_ptr<open3d::geometry::PointCloud>> normalPlaneStore;
 //    auto outPlane = std::shared_ptr<open3d::geometry::PointCloud>();
 //    auto normal = std::make_shared<geometry::PointCloud>();
     if (io::ReadPointCloud(filename, *cloud_ptr)) {
@@ -74,7 +81,8 @@ bool PlaneDetection::readMeshFile(string filename)
     std::vector<Eigen::Vector3d> vColorInPlane; // = {0, 0, 255};
     std::vector<size_t> normalInliers;
     vector<Eigen::Matrix<double, 3, 1>> normalVector;
-    std::vector<Eigen::Matrix<double, 4, 1>> paramaterPlaneVector;
+    vector<Eigen::Vector4d ,Eigen::aligned_allocator<Eigen::Vector4d>> paramaterPlaneVector;
+
 //    Eigen::Matrix<double, 4, 1> parametersPlane;
 //    while (std::get<1>(cloud_ptr->SegmentPlane(0.05,3,100)).size() >= maxIdentifyPoints)
 //    while (std::get<1>(cloud_ptr->SegmentPlane(0.05,3,100)).size() >= maxIdentifyPoints)
@@ -130,8 +138,8 @@ bool PlaneDetection::readMeshFile(string filename)
             continue;
         }
         planeCount++;
-        Eigen::Vector4d parametersPlane = std::get<0>(Result);
-        cout << "parameter of the detect plane" << parametersPlane << endl;
+        parametersPlane = std::get<0>(Result);
+//        cout << "parameter of the detect plane" << parametersPlane << endl;
         paramaterPlaneVector.emplace_back(parametersPlane);
         cout << "size of the plane parameter vector" << paramaterPlaneVector.size() << endl;
         cout << "normalSelectIndex" << " " << normalSelectIndex.size() << endl;
@@ -140,9 +148,13 @@ bool PlaneDetection::readMeshFile(string filename)
         normalInPlane = normalInPlane->SelectByIndex(normalSelectIndex, false);
 //        auto exceptNormalInPlane = normalInPlane->SelectByIndex(normalSelectIndex, true);
         *normalOutPlane += *exceptPlane;
-//        normalPlaneStore.push_back(normalInPlane);
+        normalPlaneStore.emplace_back(normalInPlane);
         qualifiedPlane ++ ;
         cout << "stop at here" << endl;
+        for (int n = 0; n < paramaterPlaneVector.size(); ++n) {
+            if (judgePlaneSimilarity(paramaterPlaneVector[n],paramaterPlaneVector[paramaterPlaneVector.size()-1]) < 0.0005)
+                *normalInPlane += *normalPlaneStore[n];
+        }
         Eigen::Vector3d c = { 0,0,255 };
         Eigen::Vector3d d = {255,0,0};
 //        normal->PaintUniformColor(c);

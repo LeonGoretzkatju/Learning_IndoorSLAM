@@ -28,6 +28,7 @@ public:
     ~PlaneDetection();
 
     bool readMeshFile(string filename);
+    Eigen::Vector4d parametersPlane;
 };
 
 #endif //PLANEDETECTMESH_PLANE_DETECTION_H
