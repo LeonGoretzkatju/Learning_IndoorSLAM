@@ -8,16 +8,11 @@
   </component>
   <component name="CMakeSettings">
     <configurations>
-      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" BUILD_OPTIONS="-- -j 12" ENABLED="true" />
+      <configuration PROFILE_NAME="Release" CONFIG_NAME="Release" BUILD_OPTIONS="-- -j 12" ENABLED="true" />
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="334cdb12-70a3-4d56-8310-f8c2665f97de" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plane_detection.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/plane_detection.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plane_detection.h" beforeDir="false" afterPath="$PROJECT_DIR$/plane_detection.h" afterDir="false" />
-    </list>
+    <list default="true" id="334cdb12-70a3-4d56-8310-f8c2665f97de" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -26,9 +21,17 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Release" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="ProjectId" id="1tiIIi0giDb2yaCzB7MzvQK2bNm" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -46,7 +49,8 @@
     <property name="cidr.known.project.marker" value="true" />
     <property name="cmake.loaded.for.project" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/CMakeLists.txt" />
-    <property name="settings.editor.selected.configurable" value="editor.preferences.fonts.default" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="settings.editor.selected.configurable" value="CMakeSettings" />
   </component>
   <component name="RunManager" selected="CMake Application.PlaneDetection">
     <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true">
@@ -54,19 +58,19 @@
         <option name="CLION.EXTERNAL.BUILD" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MeshPlaneDetection" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$PROJECT_DIR$/../202001130127_mesh.ply" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_PATH="$PROJECT_DIR$/CMakeLists.txt" EXPLICIT_BUILD_TARGET_NAME="all">
+    <configuration name="MeshPlaneDetection" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$PROJECT_DIR$/../202001130127_mesh.ply" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Release" RUN_PATH="$PROJECT_DIR$/CMakeLists.txt" EXPLICIT_BUILD_TARGET_NAME="all">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="PlaneDetection" type="CMakeRunConfiguration" factoryName="Application" singleton="false" PROGRAM_PARAMS="$PROJECT_DIR$/../../sparse_reconstruction/202001130127_mesh.ply" REDIRECT_INPUT="false" ELEVATE="false" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="PlaneDetection" TARGET_NAME="PlaneDetection" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="PlaneDetection" RUN_TARGET_NAME="MeshPlaneDetection">
+    <configuration name="PlaneDetection" type="CMakeRunConfiguration" factoryName="Application" singleton="false" PROGRAM_PARAMS="$PROJECT_DIR$/../../sparse_reconstruction/202001130127_mesh.ply" REDIRECT_INPUT="false" ELEVATE="false" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="PlaneDetection" TARGET_NAME="PlaneDetection" CONFIG_NAME="Release" RUN_TARGET_PROJECT_NAME="PlaneDetection" RUN_TARGET_NAME="MeshPlaneDetection">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="GradleAppRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true">
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
-        <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
     <list>
@@ -91,7 +95,13 @@
       <workItem from="1623421525686" duration="4880000" />
       <workItem from="1623488334837" duration="2316000" />
       <workItem from="1625648442622" duration="385000" />
-      <workItem from="1625648836504" duration="9383000" />
+      <workItem from="1625648836504" duration="12775000" />
+      <workItem from="1625754405256" duration="1864000" />
+      <workItem from="1625988718277" duration="7370000" />
+      <workItem from="1626325012823" duration="11493000" />
+      <workItem from="1626350839186" duration="6352000" />
+      <workItem from="1626426823398" duration="24643000" />
+      <workItem from="1626508555430" duration="18713000" />
     </task>
     <servers />
   </component>

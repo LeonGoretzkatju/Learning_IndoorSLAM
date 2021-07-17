@@ -2,8 +2,8 @@
 #include "plane_detection.h"
 
 using namespace std;
+using namespace open3d;
 PlaneDetection plane_detection;
-
 void printUsage()
 {
     cout << "How to use:  "<<
