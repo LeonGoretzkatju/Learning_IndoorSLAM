@@ -109,7 +109,6 @@ namespace ORB_SLAM2
 
         std::vector<MapLine*> GetAllMapLines();
         std::vector<MapLine*> GetReferenceMapLines();
-        std::vector<cv::Mat> GetAllCrossLines();
         long unsigned int MapLinesInMap();
 
         long unsigned int MapPointsInMap();
@@ -140,6 +139,7 @@ namespace ORB_SLAM2
 
         void AddPairPlanesObservation(MapPlane *pMP1, MapPlane *pMP2, KeyFrame* pKF);
         KeyFrame * GetCrossLineObservation(MapPlane *pMP1, MapPlane *pMP2);
+        PairPlanes GetAllPairPlaneObservation();
 
         void AddPartialManhattanObservation(MapPlane *pMP1, MapPlane *pMP2, KeyFrame* pKF);
         KeyFrame * GetPartialManhattanObservation(MapPlane *pMP1, MapPlane *pMP2);

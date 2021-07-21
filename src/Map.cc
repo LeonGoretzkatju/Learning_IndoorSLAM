@@ -319,7 +319,7 @@ namespace ORB_SLAM2 {
     }
 
     void Map::FlagMatchedPlanePoints(ORB_SLAM2::Frame &pF, const float &dTh) {
-
+//match plane points based on the distance between the point and the plane
         unique_lock<mutex> lock(mMutexMap);
         int nMatches = 0;
 
@@ -390,6 +390,10 @@ namespace ORB_SLAM2 {
         } else {
             return static_cast<KeyFrame*>(nullptr);
         }
+    }
+
+    Map::PairPlanes Map::GetAllPairPlaneObservation() {
+        return mmpPairPlanesObservations;
     }
 
     Map::Manhattans Map::GetAllManhattanObservations() {
