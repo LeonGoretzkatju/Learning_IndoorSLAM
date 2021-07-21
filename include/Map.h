@@ -65,6 +65,14 @@ namespace ORB_SLAM2
         bool operator() (const std::tuple<MapPlane*, MapPlane*, MapPlane*>& a, const std::tuple<MapPlane*, MapPlane*, MapPlane*>& b) const;
     };
 
+    struct TuplePlaneMapHash {
+        size_t operator() (const std::tuple<MapPlane*, MapPlane*, MapPlane*>& key) const;
+    };
+
+    struct TuplePlaneMapEqual {
+        bool operator() (const std::tuple<MapPlane*, MapPlane*, MapPlane*>& a, const std::tuple<MapPlane*, MapPlane*, MapPlane*>& b) const;
+    };
+
     struct PairPlaneMapEqual {
         bool operator() (const std::pair<MapPlane*, MapPlane*>& a, const std::pair<MapPlane*, MapPlane*>& b) const;
     };
@@ -80,6 +88,8 @@ namespace ORB_SLAM2
         cv::Mat CrossLine;
         typedef std::pair<MapPlane*, MapPlane*> PairPlane;
         typedef std::unordered_map<PairPlane, KeyFrame*, PairPlaneMapHash, PairPlaneMapEqual> PairPlanes;
+        typedef std::tuple<MapPlane*, MapPlane*, MapPlane*> TuplePlane;
+        typedef std::unordered_map<TuplePlane, KeyFrame*, TuplePlaneMapHash, TuplePlaneMapEqual> TuplePlanes;
 
         typedef pcl::PointXYZRGB PointT;
         typedef pcl::PointCloud <PointT> PointCloud;
@@ -94,6 +104,7 @@ namespace ORB_SLAM2
         void AddKeyFrame(KeyFrame* pKF);
         void AddMapPoint(MapPoint* pMP);
         void AddCrossLineToMap(MapPlane*, MapPlane*,cv::Mat);
+        void AddCrossPointToMap(MapPlane*, MapPlane* ,MapPlane*, cv::Mat);
         void EraseMapPoint(MapPoint* pMP);
         void EraseKeyFrame(KeyFrame* pKF);
         void SetReferenceMapPoints(const std::vector<MapPoint*> &vpMPs);
@@ -137,6 +148,10 @@ namespace ORB_SLAM2
         KeyFrame * GetManhattanObservation(MapPlane *pMP1, MapPlane *pMP2, MapPlane *pMP3);
         Manhattans GetAllManhattanObservations();
 
+        void AddTuplePlaneObservation(MapPlane *pMP1, MapPlane *pMP2, MapPlane *pMP3, KeyFrame* pKF);
+        KeyFrame * GetTuplePlaneObservation(MapPlane *pMP1, MapPlane *pMP2, MapPlane *pMP3);
+        TuplePlanes GetAllTuplePlaneObservations();
+
         void AddPairPlanesObservation(MapPlane *pMP1, MapPlane *pMP2, KeyFrame* pKF);
         KeyFrame * GetCrossLineObservation(MapPlane *pMP1, MapPlane *pMP2);
         PairPlanes GetAllPairPlaneObservation();
@@ -151,6 +166,8 @@ namespace ORB_SLAM2
     protected:
         std::tuple<unsigned long,unsigned long,cv::Mat> CrossLineSet;
         vector<std::tuple<unsigned long,unsigned long,cv::Mat>> CrossLineSets;
+        std::tuple<unsigned long ,unsigned long ,unsigned long ,cv::Mat> CrossPointSet;
+        vector<std::tuple<unsigned long ,unsigned long ,unsigned long ,cv::Mat>> CrossPointSets;
         std::set<MapPoint*> mspMapPoints;
 
         std::set<MapLine*> mspMapLines;
@@ -163,6 +180,7 @@ namespace ORB_SLAM2
         PairPlanes mmpPairPlanesObservations;
 
         Manhattans mmpManhattanObservations;
+        TuplePlanes mmpTuplePlanesObservations;
 
         std::vector<MapPoint*> mvpReferenceMapPoints;
         std::vector<MapLine*> mvpReferenceMapLines;

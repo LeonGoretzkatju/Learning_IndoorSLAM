@@ -317,6 +317,14 @@ namespace ORB_SLAM2 {
                 PlaneMatcher pmatcher(mfDThRef, mfAThRef, mfVerTh, mfParTh);
                 pmatcher.SearchMapByCoefficients(mCurrentFrame, mpMap->GetAllMapPlanes());
 
+                if (mCurrentFrame.mnPlaneNum == 2)
+                {
+                    DetectCrossLine();
+                }
+                if (mCurrentFrame.mnPlaneNum >= 3)
+                {
+                    DetectCrossPoint();
+                }
 //                std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
                 bManhattan = DetectManhattan();
 //                std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -328,14 +336,6 @@ namespace ORB_SLAM2 {
 
                 cout << "bManhattan: " << bManhattan << endl;
 //                mCurrentFrame.mnId;
-                if (mCurrentFrame.mnPlaneNum == 2)
-                {
-                    DetectCrossLine();
-                }
-                if (mCurrentFrame.mnPlaneNum >= 3)
-                {
-
-                }
 
                 if (bManhattan) {
                     // Translation (only) estimation
@@ -1090,12 +1090,87 @@ namespace ORB_SLAM2 {
         cout << "cross line vector" << mpMap->CrossLine << endl;
         KeyFrame* pKF = mpMap->GetCrossLineObservation(pMP1,pMP2);
         mpMap->AddCrossLineToMap(pMP1,pMP2,mpMap->CrossLine);
-//        mpMap->CrossLineSet = std::tuple<unsigned long,unsigned long,cv::Mat>(pMP1->mnId,pMP2->mnId,mpMap->CrossLine);
-//        mpMap->CrossLineSets.emplace_back(mpMap->CrossLineSet);
     }
 
     void Tracking::DetectCrossPoint() {
+        auto verThreshold = Config::Get<double>("Plane.MFVerticalThreshold");
+        KeyFrame * pKFrameCandidate = nullptr;
+        int MaxScore = 0;
+        cv::Mat pFc1, pFc2, pFc3, pFm1, pFm2, pFm3;
+        int Id1, Id2, Id3 = -1;
+        for (size_t i = 0; i < mCurrentFrame.mnPlaneNum; i++) {
+            cv::Mat plane1 = mCurrentFrame.mvPlaneCoefficients[i];
+            MapPlane *pMP1 = mCurrentFrame.mvpMapPlanes[i];
+            if (!pMP1 || pMP1->isBad()) {
+                continue;
+            }
+            for (size_t j = i + 1; j < mCurrentFrame.mnPlaneNum; j++) {
+                cv::Mat plane2 = mCurrentFrame.mvPlaneCoefficients[j];
+                MapPlane *pMP2 = mCurrentFrame.mvpMapPlanes[j];
+                if (!pMP2 || pMP2->isBad()) {
+                    continue;
+                }
+                float angle12 = plane1.at<float>(0) * plane2.at<float>(0) +
+                        plane1.at<float>(1) * plane2.at<float>(1) +
+                        plane1.at<float>(2) * plane2.at<float>(2);
+                if (angle12 <= verThreshold && angle12 >= -verThreshold) {
+                    for (size_t k = j + 1; k < mCurrentFrame.mnPlaneNum; k++) {
+                        cv::Mat plane3 = mCurrentFrame.mvPlaneCoefficients[k];
+                        MapPlane *pMP3 = mCurrentFrame.mvpMapPlanes[k];
+                        if (!pMP3 || pMP3->isBad()) {
+                            continue;
+                        }
+                        float angle13 = plane1.at<float>(0) * plane3.at<float>(0) +
+                                plane1.at<float>(1) * plane3.at<float>(1) +
+                                plane1.at<float>(2) * plane3.at<float>(2);
 
+                        float angle23 = plane2.at<float>(0) * plane3.at<float>(0) +
+                                plane2.at<float>(1) * plane3.at<float>(1) +
+                                plane2.at<float>(2) * plane3.at<float>(2);
+
+//                        if (angle13 > verThreshold || angle13 < -verThreshold || angle23 > verThreshold || angle23 < -verThreshold) {
+//                            continue;
+//                        }
+                        cv::Mat A, b;
+                        A = cv::Mat::eye(cv::Size(3, 3), CV_32F);
+
+                        A.at<float>(0, 0) = plane1.at<float>(0);
+                        A.at<float>(1, 0) = plane2.at<float>(0);
+                        A.at<float>(2, 0) = plane3.at<float>(0);
+                        A.at<float>(0, 1) = plane1.at<float>(1);
+                        A.at<float>(1, 1) = plane2.at<float>(1);
+                        A.at<float>(2, 1) = plane3.at<float>(1);
+                        A.at<float>(0, 2) = plane1.at<float>(2);
+                        A.at<float>(1, 2) = plane2.at<float>(2);
+                        A.at<float>(2, 2) = plane3.at<float>(2);
+                        A = A.t() * A;
+                        b = (cv::Mat_<float>(3, 1) << -plane1.at<float>(2), -plane2.at<float>(2), -plane3.at<float>(2));
+                        b = A.t() * b;
+                        mpMap->CrossPoint = A.inv() * b;
+                        cout << "cross point" << "  " << mpMap->CrossPoint << endl;
+                        mpMap->AddCrossPointToMap(pMP1, pMP2, pMP3, mpMap->CrossPoint);
+                        cout << "cross point successfully find" << endl;
+                        KeyFrame *pKF = mpMap->GetTuplePlaneObservation(pMP1, pMP2, pMP3);
+
+                        if (!pKF) {
+                            continue;
+                        }
+                    }
+                }
+                else {
+                    plane1 = (cv::Mat_<float>(3, 1) << plane1.at<float>(0), plane1.at<float>(1), plane1.at<float>(2));
+                    plane2 = (cv::Mat_<float>(3, 1) << plane2.at<float>(0), plane2.at<float>(1), plane2.at<float>(2));
+                    mpMap->CrossLine = plane1.cross(plane2);
+                    cout << "cross line vector" << mpMap->CrossLine << endl;
+                    mpMap->AddCrossLineToMap(pMP1, pMP2, mpMap->CrossLine);
+                    KeyFrame *pKF = mpMap->GetCrossLineObservation(pMP1, pMP2);
+                    if (!pKF) {
+                        continue;
+                    }
+                }
+
+            }
+        }
     }
 
     bool Tracking::DetectManhattan() {

@@ -1090,10 +1090,10 @@ namespace ORB_SLAM2 {
         cv::Mat remove_no_values = cv::Mat::zeros(edge_map.size(), edge_map.type());
         edge_map.copyTo(remove_no_values, rescaled_depth == rescaled_depth);
         edge_map = remove_no_values;
-        cout<<"computeDepthMap labelMap"<<endl;
-        depth_segmenter.labelMap(rgb_image, rescaled_depth, depth_map, edge_map,
-                                 *normal_map, label_map, &segment_masks, &segments);
-        cout<<"computeDepthMap labelMap"<<endl;
+        // cout<<"computeDepthMap labelMap"<<endl;
+        // depth_segmenter.labelMap(rgb_image, rescaled_depth, depth_map, edge_map,
+        //                          *normal_map, label_map, &segment_masks, &segments);
+        // cout<<"computeDepthMap labelMap"<<endl;
 
     }
 
