@@ -1,3 +1,12 @@
+## 2021.07.21
+### Finished
+1. Finish add the Cross-Point and Cross-Line on the Map class, the extraction of the points and lines take place in Track(), located in
+Tracking.cc. When the number of the planes in the image = 2, the Track() will execute DetectCrossLine() tp compute the CrossLine and 
+store it on the vector with PairPlanes ID. When the number of the planes in the image >= 3, the Track() will execute the DetectCrossPoint() and
+store the CrossPoint on the vector with TuplePlanes ID. Three planes must qualify the condition that at least 2 planes are perpendicular
+with the third plane, if not, the DetectCrossPoint() will execute extracting CrossLine from 2 planes and store them
+### TODO
+1. 新的图像帧进来, 需要建立提取的平面和地图中的landmrks之间的关系 need to be accomplished  
 # ManhattanSLAM
 
 # 1.Prerequisites
