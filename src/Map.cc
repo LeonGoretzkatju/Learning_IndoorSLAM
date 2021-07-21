@@ -370,6 +370,11 @@ namespace ORB_SLAM2 {
         }
     }
 
+    void Map::AddCrossLineToMap(MapPlane *pMP1, MapPlane *pMP2, cv::Mat CrossLine) {
+        CrossLineSet = std::make_tuple(pMP1->mnId,pMP2->mnId,CrossLine);
+        CrossLineSets.emplace_back(CrossLineSet);
+    }
+
     void Map::AddPairPlanesObservation(MapPlane *pMP1, MapPlane *pMP2, KeyFrame* pKF) {
         unique_lock<mutex> lock(mMutexMap);
 

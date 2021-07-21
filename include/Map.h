@@ -93,6 +93,7 @@ namespace ORB_SLAM2
 
         void AddKeyFrame(KeyFrame* pKF);
         void AddMapPoint(MapPoint* pMP);
+        void AddCrossLineToMap(MapPlane*, MapPlane*,cv::Mat);
         void EraseMapPoint(MapPoint* pMP);
         void EraseKeyFrame(KeyFrame* pKF);
         void SetReferenceMapPoints(const std::vector<MapPoint*> &vpMPs);
@@ -119,7 +120,6 @@ namespace ORB_SLAM2
         void clear();
 
         vector<KeyFrame*> mvpKeyFrameOrigins;
-
         std::mutex mMutexMapUpdate;
 
         // This avoid that two points are created simultaneously in separate threads (id conflict)
@@ -149,11 +149,11 @@ namespace ORB_SLAM2
         std::vector<SurfelElement> mvInactiveSurfels;
 
     protected:
+        std::tuple<unsigned long,unsigned long,cv::Mat> CrossLineSet;
+        vector<std::tuple<unsigned long,unsigned long,cv::Mat>> CrossLineSets;
         std::set<MapPoint*> mspMapPoints;
 
         std::set<MapLine*> mspMapLines;
-
-        std::set<cv::Mat> mspMapCrossLines;
 
         std::set<MapPlane*> mspMapPlanes;
 

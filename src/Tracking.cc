@@ -1087,7 +1087,11 @@ namespace ORB_SLAM2 {
         pN1 = (cv::Mat_<float>(3, 1) << pN1.at<float>(0), pN1.at<float>(1), pN1.at<float>(2));
         pN2 = (cv::Mat_<float>(3, 1) << pN2.at<float>(0), pN2.at<float>(1), pN2.at<float>(2));
         mpMap->CrossLine = pN1.cross(pN2);
+        cout << "cross line vector" << mpMap->CrossLine << endl;
         KeyFrame* pKF = mpMap->GetCrossLineObservation(pMP1,pMP2);
+        mpMap->AddCrossLineToMap(pMP1,pMP2,mpMap->CrossLine);
+//        mpMap->CrossLineSet = std::tuple<unsigned long,unsigned long,cv::Mat>(pMP1->mnId,pMP2->mnId,mpMap->CrossLine);
+//        mpMap->CrossLineSets.emplace_back(mpMap->CrossLineSet);
     }
 
     void Tracking::DetectCrossPoint() {
