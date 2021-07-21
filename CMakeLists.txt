@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(ManhattanSLAM)
-
+add_definitions(-w)
 IF (NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release)
 ENDIF ()
@@ -9,7 +9,7 @@ MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3 -march=native")
-set(CMAKE_CXX_STANDARD 14)
+#set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Check C++11 or C++0x support
 include(CheckCXXCompilerFlag)
@@ -28,7 +28,7 @@ else ()
 endif ()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
-
+set(OpenCV_DIR /home/nuc/tools/opencv/opencv-3.4.1/share/OpenCV)
 find_package(OpenCV 3.0 QUIET)
 if (NOT OpenCV_FOUND)
     find_package(OpenCV 2.4.3 QUIET)

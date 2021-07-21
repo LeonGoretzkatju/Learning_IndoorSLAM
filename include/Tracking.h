@@ -149,6 +149,8 @@ protected:
     void CreateInitialMapMonoWithLine();
 
     bool DetectManhattan();
+    void DetectCrossPoint();
+    void DetectCrossLine();
     void CheckReplacedInLastFrame();
     bool TrackReferenceKeyFrame();
     void UpdateLastFrame();

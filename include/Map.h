@@ -65,9 +65,22 @@ namespace ORB_SLAM2
         bool operator() (const std::tuple<MapPlane*, MapPlane*, MapPlane*>& a, const std::tuple<MapPlane*, MapPlane*, MapPlane*>& b) const;
     };
 
+    struct PairPlaneMapEqual {
+        bool operator() (const std::pair<MapPlane*, MapPlane*>& a, const std::pair<MapPlane*, MapPlane*>& b) const;
+    };
+
+    struct PairPlaneMapHash {
+        size_t operator() (const std::pair<MapPlane*, MapPlane*>& key) const;
+    };
+
     class Map
     {
     public:
+        cv::Mat CrossPoint;
+        cv::Mat CrossLine;
+        typedef std::pair<MapPlane*, MapPlane*> PairPlane;
+        typedef std::unordered_map<PairPlane, KeyFrame*, PairPlaneMapHash, PairPlaneMapEqual> PairPlanes;
+
         typedef pcl::PointXYZRGB PointT;
         typedef pcl::PointCloud <PointT> PointCloud;
 
@@ -96,6 +109,7 @@ namespace ORB_SLAM2
 
         std::vector<MapLine*> GetAllMapLines();
         std::vector<MapLine*> GetReferenceMapLines();
+        std::vector<cv::Mat> GetAllCrossLines();
         long unsigned int MapLinesInMap();
 
         long unsigned int MapPointsInMap();
@@ -124,6 +138,9 @@ namespace ORB_SLAM2
         KeyFrame * GetManhattanObservation(MapPlane *pMP1, MapPlane *pMP2, MapPlane *pMP3);
         Manhattans GetAllManhattanObservations();
 
+        void AddPairPlanesObservation(MapPlane *pMP1, MapPlane *pMP2, KeyFrame* pKF);
+        KeyFrame * GetCrossLineObservation(MapPlane *pMP1, MapPlane *pMP2);
+
         void AddPartialManhattanObservation(MapPlane *pMP1, MapPlane *pMP2, KeyFrame* pKF);
         KeyFrame * GetPartialManhattanObservation(MapPlane *pMP1, MapPlane *pMP2);
         PartialManhattans GetAllPartialManhattanObservations();
@@ -136,11 +153,14 @@ namespace ORB_SLAM2
 
         std::set<MapLine*> mspMapLines;
 
+        std::set<cv::Mat> mspMapCrossLines;
+
         std::set<MapPlane*> mspMapPlanes;
 
         std::set<KeyFrame*> mspKeyFrames;
 
         PartialManhattans mmpPartialManhattanObservations;
+        PairPlanes mmpPairPlanesObservations;
 
         Manhattans mmpManhattanObservations;
 
@@ -152,6 +172,7 @@ namespace ORB_SLAM2
         int mnBigChangeIdx;
         std::mutex mMutexMap;
     };
+
 
 } //namespace ORB_SLAM
 

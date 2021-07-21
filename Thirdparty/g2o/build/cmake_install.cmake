@@ -1,4 +1,4 @@
-# Install script for directory: /home/yanyan/Documents/research/open/ManhattanSLAM/Thirdparty/g2o
+# Install script for directory: /home/nuc/SLAM/ManhattanSLAM/Thirdparty/g2o
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/yanyan/Documents/research/open/ManhattanSLAM/Thirdparty/g2o/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/g2o/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

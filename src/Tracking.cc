@@ -327,6 +327,15 @@ namespace ORB_SLAM2 {
 //                fileWrite12.close();
 
                 cout << "bManhattan: " << bManhattan << endl;
+//                mCurrentFrame.mnId;
+                if (mCurrentFrame.mnPlaneNum == 2)
+                {
+                    DetectCrossLine();
+                }
+                if (mCurrentFrame.mnPlaneNum >= 3)
+                {
+
+                }
 
                 if (bManhattan) {
                     // Translation (only) estimation
@@ -616,7 +625,7 @@ namespace ORB_SLAM2 {
 
             for (int i = 0; i < mCurrentFrame.mnPlaneNum; ++i) {
                 cv::Mat p3D = mCurrentFrame.ComputePlaneWorldCoeff(i);
-                MapPlane *pNewMP = new MapPlane(p3D, pKFini, mpMap);
+                MapPlane *pNewMP = new MapPlane(p3D, pKFini, mpMap);// create new plane in the Map,mpMap is the Map
                 pNewMP->AddObservation(pKFini,i);
                 pKFini->AddMapPlane(pNewMP, i);
                 pNewMP->UpdateCoefficientsAndPoints();
@@ -1062,6 +1071,27 @@ namespace ORB_SLAM2 {
 //                }
 //            }
 //        }
+    }
+
+    void Tracking::DetectCrossLine() {
+        cv::Mat pN1 = mCurrentFrame.mvPlaneCoefficients[0];
+        cv::Mat pN2 = mCurrentFrame.mvPlaneCoefficients[1];
+        MapPlane *pMP1 = mCurrentFrame.mvpMapPlanes[0];
+        MapPlane *pMP2 = mCurrentFrame.mvpMapPlanes[1];
+        if (!pMP1 || pMP1->isBad()) {
+            return;
+        }
+        if (!pMP2 || pMP2->isBad()) {
+            return;
+        }
+        pN1 = (cv::Mat_<float>(3, 1) << pN1.at<float>(0), pN1.at<float>(1), pN1.at<float>(2));
+        pN2 = (cv::Mat_<float>(3, 1) << pN2.at<float>(0), pN2.at<float>(1), pN2.at<float>(2));
+        mpMap->CrossLine = pN1.cross(pN2);
+        KeyFrame* pKF = mpMap->GetCrossLineObservation(pMP1,pMP2);
+    }
+
+    void Tracking::DetectCrossPoint() {
+
     }
 
     bool Tracking::DetectManhattan() {

@@ -45,7 +45,47 @@ namespace ORB_SLAM2 {
         return hash;
     }
 
+    size_t PairPlaneMapHash::operator() (const std::pair<MapPlane*, MapPlane*>& key) const {
+        int id1, id2;
+        if (key.first->mnId > key.second->mnId) {
+            id1 = key.second->mnId;
+            id2 = key.first->mnId;
+        } else {
+            id1 = key.first->mnId;
+            id2 = key.second->mnId;
+        }
+
+        size_t hash = 0;
+        hash += (71*hash + id1) % 5;
+        hash += (71*hash + id2) % 5;
+        return hash;
+    }
+
     bool PartialManhattanMapEqual::operator() (const std::pair<MapPlane*, MapPlane*>& a, const std::pair<MapPlane*, MapPlane*>& b) const {
+        MapPlane* pMP11, *pMP12, *pMP21, *pMP22;
+        if (a.first->mnId > a.second->mnId) {
+            pMP11 = a.second;
+            pMP12 = a.first;
+        } else {
+            pMP11 = a.first;
+            pMP12 = a.second;
+        }
+
+        if (b.first->mnId > b.second->mnId) {
+            pMP21 = b.second;
+            pMP22 = b.first;
+        } else {
+            pMP21 = b.first;
+            pMP22 = b.second;
+        }
+
+        std::pair<MapPlane*, MapPlane*> p1 = std::make_pair(pMP11, pMP12);
+        std::pair<MapPlane*, MapPlane*> p2 = std::make_pair(pMP21, pMP22);
+
+        return p1 == p2;
+    }
+
+    bool PairPlaneMapEqual::operator() (const std::pair<MapPlane*, MapPlane*>& a, const std::pair<MapPlane*, MapPlane*>& b) const {
         MapPlane* pMP11, *pMP12, *pMP21, *pMP22;
         if (a.first->mnId > a.second->mnId) {
             pMP11 = a.second;
@@ -325,6 +365,28 @@ namespace ORB_SLAM2 {
         Manhattan manhattan = std::make_tuple(pMP1, pMP2, pMP3);
         if (mmpManhattanObservations.count(manhattan)) {
             return mmpManhattanObservations[manhattan];
+        } else {
+            return static_cast<KeyFrame*>(nullptr);
+        }
+    }
+
+    void Map::AddPairPlanesObservation(MapPlane *pMP1, MapPlane *pMP2, KeyFrame* pKF) {
+        unique_lock<mutex> lock(mMutexMap);
+
+        PairPlane plane = std::make_pair(pMP1, pMP2);
+//        cout << "Insert Manhattan2 pMP1: " << pMP1->mnId << endl;
+//        cout << "Insert Manhattan2 pMP2: " << pMP2->mnId << endl;
+        if (mmpPairPlanesObservations.count(plane) != 0)
+            return;
+        pKF->SetNotErase();
+        mmpPairPlanesObservations[plane] = pKF;
+    }
+
+    KeyFrame* Map::GetCrossLineObservation(MapPlane *pMP1, MapPlane *pMP2) {
+        unique_lock<mutex> lock(mMutexMap);
+        PairPlane plane = std::make_pair(pMP1, pMP2);
+        if (mmpPairPlanesObservations.count(plane)) {
+            return mmpPairPlanesObservations[plane];
         } else {
             return static_cast<KeyFrame*>(nullptr);
         }
