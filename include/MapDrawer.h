@@ -42,6 +42,8 @@ public:
     void DrawMapLines();
     void DrawMapPlanes();
     void DrawSurfels();
+    void DrawCrossLine();
+    void DrawCrossPoint();
     void DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph);
     void DrawCurrentCamera(pangolin::OpenGlMatrix &Twc);
     void SetCurrentCameraPose(const cv::Mat &Tcw);

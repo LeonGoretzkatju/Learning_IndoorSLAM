@@ -153,6 +153,47 @@ namespace ORB_SLAM2
         glEnd();
     }
 
+    void MapDrawer::DrawCrossLine() {
+        const vector<cv::Mat> &vpMLs = mpMap->GetAllCrossLines();
+        if(vpMLs.empty())
+            return;
+
+        glLineWidth(mLineWidth);
+        glBegin ( GL_LINES );
+//    glColor3f(0.4, 0.35, 0.8);  //紫色
+        glColor3f(0.0,0.0,0.0);    //黑色
+
+//    cout << "vpMLs.size() = " << vpMLs.size() << endl;
+        for(size_t i=0, iend=vpMLs.size(); i<iend; i++)
+        {
+            glVertex3f(vpMLs[i].at<float>(0), vpMLs[i].at<float>(1), vpMLs[i].at<float>(2));
+        }
+        glEnd();
+
+        glLineWidth(mLineWidth);
+        glBegin ( GL_LINES );
+        glColor3f(0.0,0.0,0.0); //红色
+        glEnd();
+    }
+
+    void MapDrawer::DrawCrossPoint() {
+        const vector<cv::Mat> &vpMPs = mpMap->GetAllCrossPoints();
+        if(vpMPs.empty())
+            return;
+        glPointSize(mPointSize*5);
+        glBegin(GL_POINTS);
+
+        for(auto pMP : vpMPs){
+            float ir = 255.0;
+            float ig = 255.0;
+            float ib = 0.0;
+            float norm = sqrt(ir*ir + ig*ig + ib*ib);
+            glColor3f(ir/norm, ig/norm, ib/norm);
+            glVertex3f(pMP.at<float>(0),pMP.at<float>(1),pMP.at<float>(2));
+        }
+        glEnd();
+    }
+
     void MapDrawer::DrawSurfels() {
         const vector<SurfelElement> &vSurfels = mpMap->mvLocalSurfels;
         const vector<SurfelElement> &vInactiveSurfels = mpMap->mvInactiveSurfels;

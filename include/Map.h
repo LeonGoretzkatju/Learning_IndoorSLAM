@@ -118,6 +118,8 @@ namespace ORB_SLAM2
         std::vector<KeyFrame*> GetAllKeyFrames();
         std::vector<MapPoint*> GetAllMapPoints();
         std::vector<MapPoint*> GetReferenceMapPoints();
+        std::vector<cv::Mat> GetAllCrossLines();
+        std::vector<cv::Mat> GetAllCrossPoints();
 
         std::vector<MapLine*> GetAllMapLines();
         std::vector<MapLine*> GetReferenceMapLines();
@@ -165,8 +167,10 @@ namespace ORB_SLAM2
 
     protected:
         std::tuple<unsigned long,unsigned long,cv::Mat> CrossLineSet;
+        vector<cv::Mat> CrossLineDraw;
         vector<std::tuple<unsigned long,unsigned long,cv::Mat>> CrossLineSets;
         std::tuple<unsigned long ,unsigned long ,unsigned long ,cv::Mat> CrossPointSet;
+        vector<cv::Mat> CrossPointDraw;
         vector<std::tuple<unsigned long ,unsigned long ,unsigned long ,cv::Mat>> CrossPointSets;
         std::set<MapPoint*> mspMapPoints;
 

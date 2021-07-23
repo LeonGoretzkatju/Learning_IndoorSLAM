@@ -71,6 +71,8 @@ void Viewer::Run()
         pangolin::Var<bool> menuFollowCamera("menu.Follow Camera", true, true);
         pangolin::Var<bool> menuShowPoints("menu.Show Points", true, true);
         pangolin::Var<bool> menuShowLines("menu.Show Lines", true, true);
+        pangolin::Var<bool> menuShowCrossLines("menu.Show CrossLines", true, true);
+        pangolin::Var<bool> menuShowCrossPoints("menu.Show CrossPoints", true, true);
         pangolin::Var<bool> menuShowPlanes("menu.Show Planes",true,true);
         pangolin::Var<bool> menuShowSurfels("menu.Show Surfels",true,true);
         pangolin::Var<bool> menuShowKeyFrames("menu.Show KeyFrames",true,true);
@@ -80,6 +82,7 @@ void Viewer::Run()
         pangolin::Var<bool> menuScreenshot("menu.Save",false,false);
         pangolin::Var<bool> menuVideo("menu.2DVideo",false,true);
         pangolin::Var<bool> menuVideo3D("menu.3DVideo",false,true);
+
 
         pangolin::OpenGlRenderState s_cam(
                 pangolin::ProjectionMatrix(1024, 768, mViewpointF, mViewpointF, 512, 389, 0.1, 1000),
@@ -145,6 +148,10 @@ void Viewer::Run()
                 mpMapDrawer->DrawMapPlanes();
             if(menuShowSurfels)
                 mpMapDrawer->DrawSurfels();
+            if (menuShowCrossPoints)
+                mpMapDrawer->DrawCrossPoint();
+            if (menuShowCrossLines)
+                mpMapDrawer->DrawCrossLine();
 
             pangolin::FinishFrame();
 
@@ -159,6 +166,8 @@ void Viewer::Run()
                 menuShowPoints = true;
                 menuShowLines = true;
                 menuShowPlanes = true;
+                menuShowCrossLines = true;
+                menuShowCrossPoints = true;
                 menuLocalizationMode = false;
                 if(bLocalizationMode)
                     mpSystem->DeactivateLocalizationMode();

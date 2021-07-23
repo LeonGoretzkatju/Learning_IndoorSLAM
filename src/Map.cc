@@ -371,6 +371,16 @@ namespace ORB_SLAM2 {
         return vector<MapPlane *>(mspMapPlanes.begin(), mspMapPlanes.end());
     }
 
+    vector<cv::Mat> Map::GetAllCrossLines() {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<cv::Mat>(CrossLineDraw.begin(),CrossLineDraw.end());
+    }
+
+    vector<cv::Mat> Map::GetAllCrossPoints() {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<cv::Mat>(CrossPointDraw.begin(),CrossPointDraw.end());
+    }
+
     long unsigned int Map::MapPlanesInMap() {
         unique_lock<mutex> lock(mMutexMap);
         return mspMapPlanes.size();
@@ -454,12 +464,14 @@ namespace ORB_SLAM2 {
     void Map::AddCrossLineToMap(MapPlane *pMP1, MapPlane *pMP2, cv::Mat CrossLine) {
         unique_lock<mutex> lock(mMutexMap);
         CrossLineSet = std::make_tuple(pMP1->mnId,pMP2->mnId,CrossLine);
+        CrossLineDraw.emplace_back(CrossLine);
         CrossLineSets.emplace_back(CrossLineSet);
     }
 
     void Map::AddCrossPointToMap(MapPlane *pMP1, MapPlane *pMP2, MapPlane *pMP3, cv::Mat CrossPoint) {
         unique_lock<mutex> lock(mMutexMap);
         CrossPointSet = std::make_tuple(pMP1->mnId,pMP2->mnId,pMP3->mnId,CrossPoint);
+        CrossPointDraw.emplace_back(CrossPoint);
         CrossPointSets.emplace_back(CrossPointSet);
     }
 
