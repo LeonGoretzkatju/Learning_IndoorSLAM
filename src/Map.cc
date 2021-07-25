@@ -358,6 +358,7 @@ namespace ORB_SLAM2 {
 
     void Map::AddMapPlane(MapPlane *pMP) {
         unique_lock<mutex> lock(mMutexMap);
+        pMP->mvPlanePoints.get()->points;
         mspMapPlanes.insert(pMP);
     }
 

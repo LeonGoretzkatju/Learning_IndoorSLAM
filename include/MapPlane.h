@@ -16,9 +16,36 @@
 #include <pcl/point_types.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
+
 #include <pcl/ModelCoefficients.h>
 #include <pcl/exceptions.h>
 
+#include <pcl/console/parse.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+
+#include <pcl/visualization/pcl_visualizer.h>
+#include <boost/thread/thread.hpp>
+#include <pcl/features/boundary.h>
+#include <math.h>
+#include <boost/make_shared.hpp>
+
+#include <pcl/point_cloud.h>
+#include <pcl/visualization/cloud_viewer.h>
+
+
+#include <pcl/visualization/range_image_visualizer.h>
+#include <pcl/features/normal_3d.h>
+
+
+#include <pcl/filters/covariance_sampling.h>
+#include <pcl/filters/normal_space.h>
+#include <pcl/kdtree/kdtree_flann.h>
+
+#include <pcl/io/ply_io.h>
+
+#include <pcl/filters/statistical_outlier_removal.h>
 
 namespace ORB_SLAM2 {
     class KeyFrame;
@@ -71,6 +98,7 @@ namespace ORB_SLAM2 {
         void UpdateCoefficientsAndPoints();
         void UpdateCoefficientsAndPoints(Frame& pF, int id);
         void UpdateCoefficientsAndPoints(KeyFrame *pKF, int id);
+        void UpdateComputePlaneBoundary();
 
     public:
         long unsigned int mnId; ///< Global ID for MapPlane;

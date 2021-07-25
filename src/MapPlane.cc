@@ -426,6 +426,30 @@ namespace ORB_SLAM2{
 //        }
     }
 
+    void MapPlane::UpdateComputePlaneBoundary() {
+        pcl::PointCloud<pcl::Boundary> boundaries;
+        pcl::BoundaryEstimation<pcl::PointXYZRGB,pcl::Normal,pcl::Boundary> boundEst;
+        pcl::NormalEstimation<pcl::PointXYZRGB,pcl::Normal> normEst;
+        pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_boundary (new pcl::PointCloud<pcl::PointXYZRGB>);
+        normEst.setInputCloud(mvPlanePoints);
+        normEst.setRadiusSearch(0.2);
+        normEst.compute(*normals);
+        boundEst.setInputCloud(mvPlanePoints);
+        boundEst.setInputNormals(normals);
+        boundEst.setRadiusSearch(0.2);
+        boundEst.setAngleThreshold(M_PI/4);
+        boundEst.setSearchMethod(pcl::search::KdTree<pcl::PointXYZRGB>::Ptr (new pcl::search::KdTree<pcl::PointXYZRGB>));
+        boundEst.compute(boundaries);
+        for (int i = 0; i < mvPlanePoints.get()->points.size(); ++i) {
+            if (boundaries[i].boundary_point > 0)
+            {
+                cloud_boundary->push_back(mvPlanePoints.get()->points[i]);
+            }
+        }
+
+    }
+
     void MapPlane::UpdateCoefficientsAndPoints(ORB_SLAM2::Frame &pF, int id) {
 
         PointCloud::Ptr combinedPoints (new PointCloud());
