@@ -140,6 +140,8 @@ namespace ORB_SLAM2
         std::mutex mMutexLineCreation;
 
         void AddMapPlane(MapPlane* pMP);
+        void AddMapPlaneBoundary(MapPlane* pMP);
+        std::vector<MapPlane*> GetAllMapPlaneBoundary();
         void EraseMapPlane(MapPlane *pMP);
         std::vector<MapPlane*> GetAllMapPlanes();
         long unsigned int MapPlanesInMap();
@@ -177,6 +179,7 @@ namespace ORB_SLAM2
         std::set<MapLine*> mspMapLines;
 
         std::set<MapPlane*> mspMapPlanes;
+        std::set<MapPlane*> mspMapPlanesBoundaries;
 
         std::set<KeyFrame*> mspKeyFrames;
 

@@ -629,7 +629,10 @@ namespace ORB_SLAM2 {
                 pNewMP->AddObservation(pKFini,i);
                 pKFini->AddMapPlane(pNewMP, i);
                 pNewMP->UpdateCoefficientsAndPoints();
+                pNewMP->UpdateComputePlaneBoundary();
                 mpMap->AddMapPlane(pNewMP);
+                mpMap->AddMapPlaneBoundary(pNewMP);
+
                 mCurrentFrame.mvpMapPlanes[i] = pNewMP;
             }
 

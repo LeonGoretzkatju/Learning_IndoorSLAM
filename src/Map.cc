@@ -362,6 +362,12 @@ namespace ORB_SLAM2 {
         mspMapPlanes.insert(pMP);
     }
 
+    void Map::AddMapPlaneBoundary(MapPlane* pMP){
+        unique_lock<mutex> lock(mMutexMap);
+        pMP->cloud_boundary.get()->points;
+        mspMapPlanesBoundaries.insert(pMP);
+    }
+
     void Map::EraseMapPlane(MapPlane *pMP) {
         unique_lock<mutex> lock(mMutexMap);
         mspMapPlanes.erase(pMP);
@@ -370,6 +376,11 @@ namespace ORB_SLAM2 {
     vector<MapPlane *> Map::GetAllMapPlanes() {
         unique_lock<mutex> lock(mMutexMap);
         return vector<MapPlane *>(mspMapPlanes.begin(), mspMapPlanes.end());
+    }
+
+    vector<MapPlane *> Map::GetAllMapPlaneBoundary() {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<MapPlane *>(mspMapPlanesBoundaries.begin(), mspMapPlanesBoundaries.end());
     }
 
     vector<cv::Mat> Map::GetAllCrossLines() {

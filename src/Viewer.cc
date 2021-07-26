@@ -146,6 +146,7 @@ void Viewer::Run()
                 mpMapDrawer->DrawMapLines();    //绘制特征线
             if(menuShowPlanes)
                 mpMapDrawer->DrawMapPlanes();
+                mpMapDrawer->DrawMapPlaneBoundaries();
             if(menuShowSurfels)
                 mpMapDrawer->DrawSurfels();
             if (menuShowCrossPoints)

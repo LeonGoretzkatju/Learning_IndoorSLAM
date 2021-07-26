@@ -431,20 +431,21 @@ namespace ORB_SLAM2{
         pcl::BoundaryEstimation<pcl::PointXYZRGB,pcl::Normal,pcl::Boundary> boundEst;
         pcl::NormalEstimation<pcl::PointXYZRGB,pcl::Normal> normEst;
         pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_boundary (new pcl::PointCloud<pcl::PointXYZRGB>);
-        normEst.setInputCloud(mvPlanePoints);
-        normEst.setRadiusSearch(0.2);
+//        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_boundary (new pcl::PointCloud<pcl::PointXYZRGB>);
+        copyPlanePoints = mvPlanePoints;
+        normEst.setInputCloud(copyPlanePoints);
+        normEst.setRadiusSearch(0.02);
         normEst.compute(*normals);
-        boundEst.setInputCloud(mvPlanePoints);
+        boundEst.setInputCloud(copyPlanePoints);
         boundEst.setInputNormals(normals);
-        boundEst.setRadiusSearch(0.2);
+        boundEst.setRadiusSearch(0.02);
         boundEst.setAngleThreshold(M_PI/4);
         boundEst.setSearchMethod(pcl::search::KdTree<pcl::PointXYZRGB>::Ptr (new pcl::search::KdTree<pcl::PointXYZRGB>));
         boundEst.compute(boundaries);
-        for (int i = 0; i < mvPlanePoints.get()->points.size(); ++i) {
+        for (int i = 0; i < copyPlanePoints.get()->points.size(); ++i) {
             if (boundaries[i].boundary_point > 0)
             {
-                cloud_boundary->push_back(mvPlanePoints.get()->points[i]);
+                cloud_boundary->push_back(copyPlanePoints.get()->points[i]);
             }
         }
 

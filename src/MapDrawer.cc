@@ -153,6 +153,27 @@ namespace ORB_SLAM2
         glEnd();
     }
 
+    void MapDrawer::DrawMapPlaneBoundaries() {
+        const vector<MapPlane*> &vpMPs = mpMap->GetAllMapPlaneBoundary();
+        if(vpMPs.empty())
+            return;
+        glPointSize(mPointSize*2);
+        glBegin(GL_POINTS);
+
+        for(auto pMP : vpMPs){
+            float ir = pMP->mRed;
+            float ig = pMP->mGreen;
+            float ib = pMP->mBlue;
+            float norm = sqrt(ir*ir + ig*ig + ib*ib);
+            glColor3f(ir/norm, ig/norm, ib/norm);
+
+            for(auto& p : pMP->cloud_boundary.get()->points){
+                glVertex3f(p.x,p.y,p.z);
+            }
+        }
+        glEnd();
+    }
+
     void MapDrawer::DrawCrossLine() {
         const vector<cv::Mat> &vpMLs = mpMap->GetAllCrossLines();
         if(vpMLs.empty())
