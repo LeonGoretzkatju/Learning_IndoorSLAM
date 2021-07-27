@@ -154,21 +154,27 @@ namespace ORB_SLAM2
     }
 
     void MapDrawer::DrawMapPlaneBoundaries() {
-        const vector<MapPlane*> &vpMPs = mpMap->GetAllMapPlaneBoundary();
+        const vector<MapPlane*> &vpMPs = mpMap->GetAllMapPlanes();
         if(vpMPs.empty())
             return;
         glPointSize(mPointSize*2);
         glBegin(GL_POINTS);
 
         for(auto pMP : vpMPs){
-            float ir = pMP->mRed;
-            float ig = pMP->mGreen;
-            float ib = pMP->mBlue;
+            float ir = 255.0;
+            float ig = 0.0;
+            float ib = 0.0;
             float norm = sqrt(ir*ir + ig*ig + ib*ib);
             glColor3f(ir/norm, ig/norm, ib/norm);
-
-            for(auto& p : pMP->cloud_boundary.get()->points){
-                glVertex3f(p.x,p.y,p.z);
+            if (pMP->cloud_boundary.get()->points.size() > 0)
+            {
+                for(auto& p : pMP->cloud_boundary.get()->points){
+                    glVertex3f(p.x,p.y,p.z);
+                }
+            }
+            else
+            {
+                continue;
             }
         }
         glEnd();

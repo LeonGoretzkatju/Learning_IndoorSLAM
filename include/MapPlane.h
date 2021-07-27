@@ -99,6 +99,7 @@ namespace ORB_SLAM2 {
         void UpdateCoefficientsAndPoints(Frame& pF, int id);
         void UpdateCoefficientsAndPoints(KeyFrame *pKF, int id);
         void UpdateComputePlaneBoundary();
+        void UpdateComputePlaneBoundary(Frame& pF, int id);
 
     public:
         long unsigned int mnId; ///< Global ID for MapPlane;

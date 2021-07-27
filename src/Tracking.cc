@@ -440,6 +440,7 @@ namespace ORB_SLAM2 {
                 MapPlane *pMP = mCurrentFrame.mvpMapPlanes[i];
                 if (pMP) {
                     pMP->UpdateCoefficientsAndPoints(mCurrentFrame, i);
+                    pMP->UpdateComputePlaneBoundary(mCurrentFrame, i);
                 } else if (!mCurrentFrame.mvbPlaneOutlier[i]) {
                     mCurrentFrame.mbNewPlane = true;
                 }
@@ -2317,7 +2318,9 @@ namespace ORB_SLAM2 {
                 pNewMP->AddObservation(pKF,i);
                 pKF->AddMapPlane(pNewMP, i);
                 pNewMP->UpdateCoefficientsAndPoints();
+                pNewMP->UpdateComputePlaneBoundary();
                 mpMap->AddMapPlane(pNewMP);
+                mpMap->AddMapPlaneBoundary(pNewMP);
             }
 
 //            mpPointCloudMapping->print();
