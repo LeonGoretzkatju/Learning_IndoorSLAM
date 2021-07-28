@@ -241,6 +241,14 @@ namespace ORB_SLAM2
         return res;
     }
 
+    double PlaneMatcher::PointToPlaneDistance(const cv::Mat &plane, pcl::PointXYZRGB &point) {
+        double dis = abs(plane.at<float>(0, 0) * point.x +
+                         plane.at<float>(1, 0) * point.y +
+                         plane.at<float>(2, 0) * point.z +
+                         plane.at<float>(3, 0));
+        return dis;
+    }
+
     int PlaneMatcher::SearchByCoefficients(KeyFrame *pKF, cv::Mat Scw, const std::vector<MapPlane *> &vpPlanes, const std::vector<MapPlane *> &vpVerticalPlanes, const std::vector<MapPlane *> &vpParallelPlanes,
                                            std::vector<MapPlane *> &vpMatched, std::vector<MapPlane *> &vpVerticalMatched, std::vector<MapPlane *> &vpParallelMatched) {
 

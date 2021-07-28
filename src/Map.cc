@@ -362,6 +362,54 @@ namespace ORB_SLAM2 {
         mspMapPlanes.insert(pMP);
     }
 
+    void Map::ComputeCrossLine(const std::vector<MapPlane*> &vpMapPlanes, double threshold, double threshold1) {
+        PointCloud::Ptr boundary (new PointCloud());
+        for (auto vpMapPlane : vpMapPlanes) {
+            for (MapPlane* v1pMapPlane = vpMapPlane + 1; v1pMapPlane != vpMapPlanes.back(); v1pMapPlane ++) {
+                cv::Mat p1 = vpMapPlane->GetWorldPos();
+                double dis = planeMatcher->PointDistanceFromPlane(p1,v1pMapPlane->mvPlanePoints);
+                if (dis < threshold)
+                    for (auto p : v1pMapPlane->mvPlanePoints->points) {
+                        if (planeMatcher->PointToPlaneDistance(p1,p) < threshold1)
+                            boundary->points.emplace_back(p);
+                    }
+                    for (auto pp : vpMapPlane->mvPlanePoints->points) {
+                        if (planeMatcher->PointToPlaneDistance(vpMapPlane->GetWorldPos(),pp) < threshold1)
+                            boundary->points.emplace_back(pp);
+                    }
+                    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+                    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+                    pcl::SACSegmentation<PointT> seg;
+                    seg.setOptimizeCoefficients(true);
+                    seg.setModelType(pcl::SACMODEL_LINE);
+                    seg.setMethodType(pcl::SAC_RANSAC);
+                    seg.setDistanceThreshold(0.01);
+
+                    seg.setInputCloud(boundary);
+                    seg.segment(*inliers, *coefficients);
+                    std::cout << "a：" << "        " << coefficients->values[0] << endl;
+                    std::cout << "b：" << "        " << coefficients->values[1] << endl;
+                    std::cout << "c：" << "        " << coefficients->values[2] << endl;
+                    std::cout << "d：" << "        " << coefficients->values[3] << endl;
+                    std::cout << "e：" << "        " << coefficients->values[4] << endl;
+                    std::cout << "f：" << "        " << coefficients->values[5] << endl;
+                    PointCloud::Ptr inlierCloud (new PointCloud());
+                    for (int i = 0; i < inliers->indices.size(); ++i) {
+                        inlierCloud->points.push_back(boundary->points.at(inliers->indices[i]));
+                    }
+                    pcl::PointCloud<pcl::PointXYZ>::Ptr c_plane2(new pcl::PointCloud<pcl::PointXYZ>);  //存储直线点云
+                    pcl::ExtractIndices<pcl::PointXYZ> extract;  //创建点云提取对象
+                    extract.setInputCloud(cloud);    //设置输入点云
+                    extract.setIndices(inliers);     //设置分割后的内点为需要提取的点集
+                    extract.setNegative(false);      //false提取内点, true提取外点
+                    extract.filter(*c_plane2);        //提取输出存储到c_plane2
+
+
+
+            }
+        }
+    }
+
     void Map::AddMapPlaneBoundary(MapPlane* pMP){
         unique_lock<mutex> lock(mMutexMap);
         pMP->cloud_boundary.get()->points;

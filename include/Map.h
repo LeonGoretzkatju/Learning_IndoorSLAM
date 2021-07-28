@@ -23,6 +23,7 @@
 
 #include "MapPoint.h"
 #include "KeyFrame.h"
+#include "PlaneMatcher.h"
 #include <set>
 #include <unordered_map>
 
@@ -86,6 +87,7 @@ namespace ORB_SLAM2
     public:
         cv::Mat CrossPoint;
         cv::Mat CrossLine;
+        PlaneMatcher* planeMatcher;
         typedef std::pair<MapPlane*, MapPlane*> PairPlane;
         typedef std::unordered_map<PairPlane, KeyFrame*, PairPlaneMapHash, PairPlaneMapEqual> PairPlanes;
         typedef std::tuple<MapPlane*, MapPlane*, MapPlane*> TuplePlane;
@@ -93,6 +95,7 @@ namespace ORB_SLAM2
 
         typedef pcl::PointXYZRGB PointT;
         typedef pcl::PointCloud <PointT> PointCloud;
+//        PointCloud::Ptr boundary;
 
         typedef std::pair<MapPlane*, MapPlane*> PartialManhattan;
         typedef std::tuple<MapPlane*, MapPlane*, MapPlane*> Manhattan;
@@ -103,6 +106,7 @@ namespace ORB_SLAM2
 
         void AddKeyFrame(KeyFrame* pKF);
         void AddMapPoint(MapPoint* pMP);
+        void ComputeCrossLine(const std::vector<MapPlane*> &vpMapPlanes, double threshold, double threshold1);
         void AddCrossLineToMap(MapPlane*, MapPlane*,cv::Mat);
         void AddCrossPointToMap(MapPlane*, MapPlane* ,MapPlane*, cv::Mat);
         void EraseMapPoint(MapPoint* pMP);
