@@ -1099,7 +1099,7 @@ namespace ORB_SLAM2 {
 
     cv::Mat Frame::ComputePlaneWorldCoeff(const int &idx) {
         cv::Mat temp;
-        cv::transpose(mTcw, temp);
+        cv::transpose(mTcw, temp);// transform to the world position
         return temp * mvPlaneCoefficients[idx];
     }
 

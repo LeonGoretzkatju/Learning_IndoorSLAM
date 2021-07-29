@@ -362,19 +362,45 @@ namespace ORB_SLAM2 {
         mspMapPlanes.insert(pMP);
     }
 
+    bool Map::SetSortZ(PointT &p1, PointT &p2) {
+        if (p1.z > p2.z)
+            return true;
+    }
+
+    double Map::PointDistanceFromPlane(const cv::Mat &plane, PointCloud::Ptr pointCloud) {
+        double res = 100;
+        for(auto p : pointCloud->points){
+            double dis = abs(plane.at<float>(0, 0) * p.x +
+                             plane.at<float>(1, 0) * p.y +
+                             plane.at<float>(2, 0) * p.z +
+                             plane.at<float>(3, 0));
+            if(dis < res)
+                res = dis;
+        }
+        return res;
+    }
+
+    double Map::PointToPlaneDistance(const cv::Mat &plane, pcl::PointXYZRGB &point) {
+        double dis = abs(plane.at<float>(0, 0) * point.x +
+                         plane.at<float>(1, 0) * point.y +
+                         plane.at<float>(2, 0) * point.z +
+                         plane.at<float>(3, 0));
+        return dis;
+    }
+
     void Map::ComputeCrossLine(const std::vector<MapPlane*> &vpMapPlanes, double threshold, double threshold1) {
         PointCloud::Ptr boundary (new PointCloud());
         for (auto vpMapPlane : vpMapPlanes) {
             for (MapPlane* v1pMapPlane = vpMapPlane + 1; v1pMapPlane != vpMapPlanes.back(); v1pMapPlane ++) {
                 cv::Mat p1 = vpMapPlane->GetWorldPos();
-                double dis = planeMatcher->PointDistanceFromPlane(p1,v1pMapPlane->mvPlanePoints);
+                double dis = PointDistanceFromPlane(p1,v1pMapPlane->mvPlanePoints);
                 if (dis < threshold)
                     for (auto p : v1pMapPlane->mvPlanePoints->points) {
-                        if (planeMatcher->PointToPlaneDistance(p1,p) < threshold1)
+                        if (PointToPlaneDistance(p1,p) < threshold1)
                             boundary->points.emplace_back(p);
                     }
                     for (auto pp : vpMapPlane->mvPlanePoints->points) {
-                        if (planeMatcher->PointToPlaneDistance(vpMapPlane->GetWorldPos(),pp) < threshold1)
+                        if (PointToPlaneDistance(vpMapPlane->GetWorldPos(),pp) < threshold1)
                             boundary->points.emplace_back(pp);
                     }
                     pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
@@ -397,12 +423,44 @@ namespace ORB_SLAM2 {
                     for (int i = 0; i < inliers->indices.size(); ++i) {
                         inlierCloud->points.push_back(boundary->points.at(inliers->indices[i]));
                     }
-                    pcl::PointCloud<pcl::PointXYZ>::Ptr c_plane2(new pcl::PointCloud<pcl::PointXYZ>);  //存储直线点云
-                    pcl::ExtractIndices<pcl::PointXYZ> extract;  //创建点云提取对象
-                    extract.setInputCloud(cloud);    //设置输入点云
-                    extract.setIndices(inliers);     //设置分割后的内点为需要提取的点集
-                    extract.setNegative(false);      //false提取内点, true提取外点
-                    extract.filter(*c_plane2);        //提取输出存储到c_plane2
+                    std::sort(inlierCloud->points.begin(),inlierCloud->points.end(),SetSortZ);
+                    pcl::PointXYZRGB point1 = inlierCloud->points[0];
+                    pcl::PointXYZRGB point2 = inlierCloud->points[inlierCloud->points.size()-1];
+                    pcl::PointXYZRGB ProjectLeft1, ProjectLeft2, ProjectRight1, ProjectRight2;
+                    float tLeft1 = (vpMapPlane->GetWorldPos()).at<float>(0,0)*point1.x +
+                            (vpMapPlane->GetWorldPos()).at<float>(1,0)*point1.y +
+                            (vpMapPlane->GetWorldPos()).at<float>(2,0)*point1.z +
+                            (vpMapPlane->GetWorldPos()).at<float>(3,0);
+                    float tLeft2 = (vpMapPlane->GetWorldPos()).at<float>(0,0)*point2.x +
+                               (vpMapPlane->GetWorldPos()).at<float>(1,0)*point2.y +
+                               (vpMapPlane->GetWorldPos()).at<float>(2,0)*point2.z +
+                               (vpMapPlane->GetWorldPos()).at<float>(3,0);
+                    float tRight1 = (v1pMapPlane->GetWorldPos()).at<float>(0,0)*point1.x +
+                                   (v1pMapPlane->GetWorldPos()).at<float>(1,0)*point1.y +
+                                   (v1pMapPlane->GetWorldPos()).at<float>(2,0)*point1.z +
+                                   (v1pMapPlane->GetWorldPos()).at<float>(3,0);
+                    float tRight2 = (v1pMapPlane->GetWorldPos()).at<float>(0,0)*point2.x +
+                                    (v1pMapPlane->GetWorldPos()).at<float>(1,0)*point2.y +
+                                    (v1pMapPlane->GetWorldPos()).at<float>(2,0)*point2.z +
+                                    (v1pMapPlane->GetWorldPos()).at<float>(3,0);
+                    ProjectLeft1.x = point1.x - (vpMapPlane->GetWorldPos()).at<float>(0,0)*tLeft1;
+                    ProjectLeft1.y = point1.y - (vpMapPlane->GetWorldPos()).at<float>(1,0)*tLeft1;
+                    ProjectLeft1.z = point1.z - (vpMapPlane->GetWorldPos()).at<float>(2,0)*tLeft1;
+                    ProjectRight1.x = point1.x - (v1pMapPlane->GetWorldPos()).at<float>(0,0)*tRight1;
+                    ProjectRight1.y = point1.y - (v1pMapPlane->GetWorldPos()).at<float>(1,0)*tRight1;
+                    ProjectRight1.z = point1.z - (v1pMapPlane->GetWorldPos()).at<float>(2,0)*tRight1;
+                    ProjectLeft2.x = point2.x - (vpMapPlane->GetWorldPos()).at<float>(0,0)*tLeft2;
+                    ProjectLeft2.y = point2.y - (vpMapPlane->GetWorldPos()).at<float>(1,0)*tLeft2;
+                    ProjectLeft2.z = point2.z - (vpMapPlane->GetWorldPos()).at<float>(2,0)*tLeft2;
+                    ProjectRight2.x = point2.x - (v1pMapPlane->GetWorldPos()).at<float>(0,0)*tRight2;
+                    ProjectRight2.y = point2.y - (v1pMapPlane->GetWorldPos()).at<float>(1,0)*tRight2;
+                    ProjectRight2.z = point2.z - (v1pMapPlane->GetWorldPos()).at<float>(2,0)*tRight2;
+                    cv::Mat pN1 = vpMapPlane->GetWorldPos();
+                    cv::Mat pN2 = v1pMapPlane->GetWorldPos();
+                    pN1 = (cv::Mat_<float>(3,1) << pN1.at<float>(0), pN1.at<float>(1), pN1.at<float>(2));
+                    pN2 = (cv::Mat_<float>(3, 1) << pN2.at<float>(0), pN2.at<float>(1), pN2.at<float>(2));
+                    cv::Mat CrossLine = pN1.cross(pN2);
+
 
 
 

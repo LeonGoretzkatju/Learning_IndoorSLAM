@@ -32,11 +32,11 @@ namespace ORB_SLAM2 {
         int Fuse(KeyFrame* pKF, cv::Mat Scw, const std::vector<MapPlane*> &vpPlanes, const std::vector<MapPlane*> &vpVerticalPlanes,
                 const std::vector<MapPlane*> &vpParallelPlanes, vector<MapPlane *> &vpReplacePlane,
                  vector<MapPlane *> &vpReplaceVerticalPlane, vector<MapPlane *> &vpReplaceParallelPlane);
-        double PointDistanceFromPlane(const cv::Mat &plane, PointCloud::Ptr pointCloud);
+
         double PointToPlaneDistance(const cv::Mat &plane, pcl::PointXYZRGB &point);
     protected:
         float dTh, aTh, verTh, parTh;
-
+        double PointDistanceFromPlane(const cv::Mat &plane, PointCloud::Ptr pointCloud);
 
     };
 }

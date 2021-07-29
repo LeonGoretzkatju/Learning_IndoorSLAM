@@ -15,7 +15,7 @@ namespace ORB_SLAM2
 
         for (int i = 0; i < pF.mnPlaneNum; ++i) {
 
-            cv::Mat pM = pF.ComputePlaneWorldCoeff(i);
+            cv::Mat pM = pF.ComputePlaneWorldCoeff(i);// transform the plane parameter to the world position
 
 //            cout << "Plane i: " << i << endl;
 

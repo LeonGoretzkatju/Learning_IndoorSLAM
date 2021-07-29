@@ -1,4 +1,4 @@
-# Install script for directory: /home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2
+# Install script for directory: /home/yons/Open3dTest/Learning_IndoorSLAM/Thirdparty/DBoW2
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/yons/Open3dTest/Learning_IndoorSLAM/Thirdparty/DBoW2/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
