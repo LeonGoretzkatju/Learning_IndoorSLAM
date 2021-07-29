@@ -427,6 +427,7 @@ namespace ORB_SLAM2 {
                     pcl::PointXYZRGB point1 = inlierCloud->points[0];
                     pcl::PointXYZRGB point2 = inlierCloud->points[inlierCloud->points.size()-1];
                     pcl::PointXYZRGB ProjectLeft1, ProjectLeft2, ProjectRight1, ProjectRight2;
+                    pcl::PointXYZRGB UpCrossPoint, DownCrossPoint;
                     float tLeft1 = (vpMapPlane->GetWorldPos()).at<float>(0,0)*point1.x +
                             (vpMapPlane->GetWorldPos()).at<float>(1,0)*point1.y +
                             (vpMapPlane->GetWorldPos()).at<float>(2,0)*point1.z +
@@ -460,8 +461,37 @@ namespace ORB_SLAM2 {
                     pN1 = (cv::Mat_<float>(3,1) << pN1.at<float>(0), pN1.at<float>(1), pN1.at<float>(2));
                     pN2 = (cv::Mat_<float>(3, 1) << pN2.at<float>(0), pN2.at<float>(1), pN2.at<float>(2));
                     cv::Mat CrossLine = pN1.cross(pN2);
+                    cv::Mat A, bup, bdown;
+                    A = cv::Mat::eye(cv::Size(3, 3), CV_32F);
 
-
+                    A.at<float>(0, 0) = pN1.at<float>(0);
+                    A.at<float>(1, 0) = pN2.at<float>(0);
+                    A.at<float>(2, 0) = CrossLine.at<float>(0);
+                    A.at<float>(0, 1) = pN1.at<float>(1);
+                    A.at<float>(1, 1) = pN2.at<float>(1);
+                    A.at<float>(2, 1) = CrossLine.at<float>(1);
+                    A.at<float>(0, 2) = pN1.at<float>(2);
+                    A.at<float>(1, 2) = pN2.at<float>(2);
+                    A.at<float>(2, 2) = CrossLine.at<float>(2);
+                    A = A.t() * A;
+                    float b1 = pN1.at<float>(0)*ProjectLeft1.x + pN1.at<float>(1)*ProjectLeft1.y + pN1.at<float>(2)*ProjectLeft1.z;
+                    float b2 = pN2.at<float>(0)*ProjectRight1.x + pN2.at<float>(1)*ProjectRight1.y + pN2.at<float>(2)*ProjectRight1.z;
+                    float b3 = CrossLine.at<float>(0)*ProjectLeft1.x + CrossLine.at<float>(1)*ProjectLeft1.y + CrossLine.at<float>(2)*ProjectLeft1.z;
+                    bup = (cv::Mat_<float>(3, 1) << b1, b2, b3);
+                    bup = A.t() * bup;
+                    cv::Mat CrossPointSet = A.inv() * bup ;
+                    UpCrossPoint.x = CrossPointSet.at<float>(0);
+                    UpCrossPoint.y = CrossPointSet.at<float>(1);
+                    UpCrossPoint.z = CrossPointSet.at<float>(2);
+                    float b11 = pN1.at<float>(0)*ProjectLeft2.x + pN1.at<float>(1)*ProjectLeft2.y + pN1.at<float>(2)*ProjectLeft2.z;
+                    float b22 = pN2.at<float>(0)*ProjectRight2.x + pN2.at<float>(1)*ProjectRight2.y + pN2.at<float>(2)*ProjectRight2.z;
+                    float b33 = CrossLine.at<float>(0)*ProjectLeft2.x + CrossLine.at<float>(1)*ProjectLeft2.y + CrossLine.at<float>(2)*ProjectLeft2.z;
+                    bdown = (cv::Mat_<float>(3, 1) << b11, b22, b33);
+                    bdown = A.t() * bdown;
+                    cv::Mat DownCrossPointSet = A.inv() * bdown;
+                    DownCrossPoint.x = DownCrossPointSet.at<float>(0);
+                    DownCrossPoint.y = DownCrossPointSet.at<float>(1);
+                    DownCrossPoint.z = DownCrossPointSet.at<float>(2);
 
 
             }
