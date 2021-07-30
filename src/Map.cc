@@ -327,6 +327,11 @@ namespace ORB_SLAM2 {
         mspMapLines.insert(pML);
     }
 
+    void Map::AddBoundaryLine(Vector6d &boundaryLine) {
+        unique_lock<mutex> lock(mMutexMap);
+        mspBoundaryLines.emplace_back(boundaryLine);
+    }
+
     void Map::EraseMapLine(MapLine *pML) {
         unique_lock<mutex> lock(mMutexMap);
         mspMapLines.erase(pML);
@@ -492,6 +497,9 @@ namespace ORB_SLAM2 {
                     DownCrossPoint.x = DownCrossPointSet.at<float>(0);
                     DownCrossPoint.y = DownCrossPointSet.at<float>(1);
                     DownCrossPoint.z = DownCrossPointSet.at<float>(2);
+                    Vector6d boundaryLine;
+                    boundaryLine << UpCrossPoint.x, UpCrossPoint.y, UpCrossPoint.z, DownCrossPoint.x, DownCrossPoint.y, DownCrossPoint.z;
+                    AddBoundaryLine(boundaryLine);
 
 
             }

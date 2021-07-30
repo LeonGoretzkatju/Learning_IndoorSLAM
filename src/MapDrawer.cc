@@ -90,7 +90,7 @@ namespace ORB_SLAM2
         const vector<MapLine*> &vpMLs = mpMap->GetAllMapLines();
         const vector<MapLine*> &vpRefMLs = mpMap->GetReferenceMapLines();
 
-        set<MapLine*> spRefMLs(vpRefMLs.begin(), vpRefMLs.end());
+        set<MapLine*> spRefMLs(vpRefMLs.begin(), vpRefMLs.end());//set中不包含任何的重复元素
 
         if(vpMLs.empty())
             return;
@@ -103,7 +103,7 @@ namespace ORB_SLAM2
 //    cout << "vpMLs.size() = " << vpMLs.size() << endl;
         for(size_t i=0, iend=vpMLs.size(); i<iend; i++)
         {
-            if(vpMLs[i]->isBad() || spRefMLs.count(vpMLs[i]))
+            if(vpMLs[i]->isBad() || spRefMLs.count(vpMLs[i]))//.count() return true if the value can be found in the set.
                 continue;
             Vector6d pos = vpMLs[i]->GetWorldPos();
 //        cout << "line = " << pos.head(3).transpose() << "\n" << pos.tail(3).transpose() << endl;

@@ -1,19 +1,26 @@
-
-# Consider dependencies only in project.
-set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
-
 # The set of languages for which implicit dependencies are needed:
 set(CMAKE_DEPENDS_LANGUAGES
+  "CXX"
+  )
+# The set of files for implicit dependencies of each language:
+set(CMAKE_DEPENDS_CHECK_CXX
+  "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2/DBoW2/BowVector.cpp" "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2/build/CMakeFiles/DBoW2.dir/DBoW2/BowVector.cpp.o"
+  "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2/DBoW2/FORB.cpp" "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2/build/CMakeFiles/DBoW2.dir/DBoW2/FORB.cpp.o"
+  "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2/DBoW2/FeatureVector.cpp" "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2/build/CMakeFiles/DBoW2.dir/DBoW2/FeatureVector.cpp.o"
+  "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2/DBoW2/ScoringObject.cpp" "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2/build/CMakeFiles/DBoW2.dir/DBoW2/ScoringObject.cpp.o"
+  "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2/DUtils/Random.cpp" "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2/build/CMakeFiles/DBoW2.dir/DUtils/Random.cpp.o"
+  "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2/DUtils/Timestamp.cpp" "/home/nuc/SLAM/ManhattanSLAM/Thirdparty/DBoW2/build/CMakeFiles/DBoW2.dir/DUtils/Timestamp.cpp.o"
+  )
+set(CMAKE_CXX_COMPILER_ID "GNU")
+
+# Preprocessor definitions for this target.
+set(CMAKE_TARGET_DEFINITIONS_CXX
+  "DBoW2_EXPORTS"
   )
 
-# The set of dependency files which are needed:
-set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/yons/Open3dTest/Learning_IndoorSLAM/Thirdparty/DBoW2/DBoW2/BowVector.cpp" "CMakeFiles/DBoW2.dir/DBoW2/BowVector.cpp.o" "gcc" "CMakeFiles/DBoW2.dir/DBoW2/BowVector.cpp.o.d"
-  "/home/yons/Open3dTest/Learning_IndoorSLAM/Thirdparty/DBoW2/DBoW2/FORB.cpp" "CMakeFiles/DBoW2.dir/DBoW2/FORB.cpp.o" "gcc" "CMakeFiles/DBoW2.dir/DBoW2/FORB.cpp.o.d"
-  "/home/yons/Open3dTest/Learning_IndoorSLAM/Thirdparty/DBoW2/DBoW2/FeatureVector.cpp" "CMakeFiles/DBoW2.dir/DBoW2/FeatureVector.cpp.o" "gcc" "CMakeFiles/DBoW2.dir/DBoW2/FeatureVector.cpp.o.d"
-  "/home/yons/Open3dTest/Learning_IndoorSLAM/Thirdparty/DBoW2/DBoW2/ScoringObject.cpp" "CMakeFiles/DBoW2.dir/DBoW2/ScoringObject.cpp.o" "gcc" "CMakeFiles/DBoW2.dir/DBoW2/ScoringObject.cpp.o.d"
-  "/home/yons/Open3dTest/Learning_IndoorSLAM/Thirdparty/DBoW2/DUtils/Random.cpp" "CMakeFiles/DBoW2.dir/DUtils/Random.cpp.o" "gcc" "CMakeFiles/DBoW2.dir/DUtils/Random.cpp.o.d"
-  "/home/yons/Open3dTest/Learning_IndoorSLAM/Thirdparty/DBoW2/DUtils/Timestamp.cpp" "CMakeFiles/DBoW2.dir/DUtils/Timestamp.cpp.o" "gcc" "CMakeFiles/DBoW2.dir/DUtils/Timestamp.cpp.o.d"
+# The include file search paths:
+set(CMAKE_CXX_TARGET_INCLUDE_PATH
+  "/usr/local/include/opencv"
   )
 
 # Targets to which this target links.

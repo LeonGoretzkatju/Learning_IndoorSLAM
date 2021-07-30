@@ -169,6 +169,8 @@ namespace ORB_SLAM2
         KeyFrame * GetPartialManhattanObservation(MapPlane *pMP1, MapPlane *pMP2);
         PartialManhattans GetAllPartialManhattanObservations();
 
+        void AddBoundaryLine(Vector6d &boundaryLine);
+
         std::vector<SurfelElement> mvLocalSurfels;
         std::vector<SurfelElement> mvInactiveSurfels;
 
@@ -182,6 +184,7 @@ namespace ORB_SLAM2
         std::set<MapPoint*> mspMapPoints;
 
         std::set<MapLine*> mspMapLines;
+        std::vector<Eigen::Vector6d> mspBoundaryLines;
 
         std::set<MapPlane*> mspMapPlanes;
         std::set<MapPlane*> mspMapPlanesBoundaries;

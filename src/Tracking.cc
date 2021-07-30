@@ -316,7 +316,7 @@ namespace ORB_SLAM2 {
 
                 PlaneMatcher pmatcher(mfDThRef, mfAThRef, mfVerTh, mfParTh);
                 pmatcher.SearchMapByCoefficients(mCurrentFrame, mpMap->GetAllMapPlanes());
-
+                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 1.5, 0.1);
                 if (mCurrentFrame.mnPlaneNum == 2)
                 {
                     DetectCrossLine();
