@@ -132,6 +132,26 @@ namespace ORB_SLAM2
         glEnd();
     }
 
+    void MapDrawer::DrawPlaneIntersections() {
+        const vector<Eigen::Matrix<double, 6, 1>> &vpMLs = mpMap->GetAllPlaneIntersections();
+
+        if(vpMLs.empty())
+            return;
+
+        glLineWidth(5);
+        glBegin ( GL_LINES );
+        glColor3f(0.0,0.0,0.0);    //黑色
+        for(size_t i=0, iend=vpMLs.size(); i<iend; i++)
+        {
+
+            Vector6d pos = vpMLs[i];
+            glVertex3f(pos(0), pos(1), pos(2));
+            glVertex3f(pos(3), pos(4), pos(5));
+
+        }
+        glEnd();
+    }
+
     void MapDrawer::DrawMapPlanes() {
         const vector<MapPlane*> &vpMPs = mpMap->GetAllMapPlanes();
         if(vpMPs.empty())

@@ -291,7 +291,7 @@ namespace ORB_SLAM2 {
         if (mState == NOT_INITIALIZED) {
             if (mSensor == System::STEREO || mSensor == System::RGBD) {
                 StereoInitialization();
-                mpSurfelMapper->InsertKeyFrame(mImGray.clone(), mImDepth.clone(), mCurrentFrame.planeDetector.plane_filter.membershipImg.clone(), mCurrentFrame.mTwc.clone(), 0, true);
+                // mpSurfelMapper->InsertKeyFrame(mImGray.clone(), mImDepth.clone(), mCurrentFrame.planeDetector.plane_filter.membershipImg.clone(), mCurrentFrame.mTwc.clone(), 0, true);
             } else
                 MonocularInitialization();
 
@@ -316,15 +316,15 @@ namespace ORB_SLAM2 {
 
                 PlaneMatcher pmatcher(mfDThRef, mfAThRef, mfVerTh, mfParTh);
                 pmatcher.SearchMapByCoefficients(mCurrentFrame, mpMap->GetAllMapPlanes());
-                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 1.5, 0.1);
-                if (mCurrentFrame.mnPlaneNum == 2)
-                {
-                    DetectCrossLine();
-                }
-                if (mCurrentFrame.mnPlaneNum >= 3)
-                {
-                    DetectCrossPoint();
-                }
+                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 15, 0.1);
+//                if (mCurrentFrame.mnPlaneNum == 2)
+//                {
+//                    DetectCrossLine();
+//                }
+//                if (mCurrentFrame.mnPlaneNum >= 3)
+//                {
+//                    DetectCrossPoint();
+//                }
 //                std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
                 bManhattan = DetectManhattan();
 //                std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -529,7 +529,7 @@ namespace ORB_SLAM2 {
                 }
 
                 if (isKeyFrame)
-                    mpSurfelMapper->InsertKeyFrame(mImGray.clone(), mImDepth.clone(), mCurrentFrame.planeDetector.plane_filter.membershipImg.clone(), mCurrentFrame.mTwc.clone(), referenceIndex, isKeyFrame);
+                    // mpSurfelMapper->InsertKeyFrame(mImGray.clone(), mImDepth.clone(), mCurrentFrame.planeDetector.plane_filter.membershipImg.clone(), mCurrentFrame.mTwc.clone(), referenceIndex, isKeyFrame);
 
                 // We allow points with high innovation (considererd outliers by the Huber Function)
                 // pass to the new keyframe, so that bundle adjustment will finally decide

@@ -93,7 +93,7 @@ namespace ORB_SLAM2
 
         typedef pcl::PointXYZRGB PointT;
         typedef pcl::PointCloud <PointT> PointCloud;
-        static bool SetSortZ(PointT &p1, PointT &p2);
+//        static bool SetSortZ(PointT &p1, PointT &p2);
 //        PointCloud::Ptr boundary;
 
         typedef std::pair<MapPlane*, MapPlane*> PartialManhattan;
@@ -169,7 +169,8 @@ namespace ORB_SLAM2
         KeyFrame * GetPartialManhattanObservation(MapPlane *pMP1, MapPlane *pMP2);
         PartialManhattans GetAllPartialManhattanObservations();
 
-        void AddBoundaryLine(Vector6d &boundaryLine);
+        void AddBoundaryLine(Eigen::Matrix<double ,6 , 1> &boundaryLine);
+        vector<Eigen::Matrix<double ,6 , 1>> GetAllPlaneIntersections();
 
         std::vector<SurfelElement> mvLocalSurfels;
         std::vector<SurfelElement> mvInactiveSurfels;
@@ -184,7 +185,7 @@ namespace ORB_SLAM2
         std::set<MapPoint*> mspMapPoints;
 
         std::set<MapLine*> mspMapLines;
-        std::vector<Eigen::Vector6d> mspBoundaryLines;
+        std::vector<Eigen::Matrix<double ,6 , 1>> mspBoundaryLines;
 
         std::set<MapPlane*> mspMapPlanes;
         std::set<MapPlane*> mspMapPlanesBoundaries;

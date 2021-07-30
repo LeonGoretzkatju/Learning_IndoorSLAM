@@ -112,8 +112,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mptLocalMapping = new thread(&ORB_SLAM2::LocalMapping::Run,mpLocalMapper);
 
     //Initialize the Surfel Mapping thread and launch
-    mpSurfelMapper = new SurfelMapping(mpMap, strSettingsFile);
-    mptSurfelMapping = new thread(&ORB_SLAM2::SurfelMapping::Run, mpSurfelMapper);
+//    mpSurfelMapper = new SurfelMapping(mpMap, strSettingsFile);
+//    mptSurfelMapping = new thread(&ORB_SLAM2::SurfelMapping::Run, mpSurfelMapper);
 
     //Initialize the Loop Closing thread and launch
     mpLoopCloser = new LoopClosing(mpMap, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR);

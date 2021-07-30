@@ -144,11 +144,12 @@ void Viewer::Run()
                 mpMapDrawer->DrawMapPoints();   //绘制地图点
             if(menuShowLines)
                 mpMapDrawer->DrawMapLines();    //绘制特征线
+                mpMapDrawer->DrawPlaneIntersections();
             if(menuShowPlanes)
                 mpMapDrawer->DrawMapPlanes();
 //                mpMapDrawer->DrawMapPlaneBoundaries();
             if(menuShowSurfels)
-                mpMapDrawer->DrawSurfels();
+//                mpMapDrawer->DrawSurfels();
 //            if (menuShowCrossPoints)
 //                mpMapDrawer->DrawCrossPoint();
 //            if (menuShowCrossLines)
