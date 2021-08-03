@@ -71,6 +71,8 @@ void Viewer::Run()
         pangolin::Var<bool> menuFollowCamera("menu.Follow Camera", true, true);
         pangolin::Var<bool> menuShowPoints("menu.Show Points", true, true);
         pangolin::Var<bool> menuShowLines("menu.Show Lines", true, true);
+        pangolin::Var<bool> menuShowInlierLines("menu.Show Inlier Lines", true, true);
+        pangolin::Var<bool> menuShowPlaneIntersections("menu.ShowPlaneIntersections", true, true);
         pangolin::Var<bool> menuShowCrossLines("menu.Show CrossLines", true, true);
         pangolin::Var<bool> menuShowCrossPoints("menu.Show CrossPoints", true, true);
         pangolin::Var<bool> menuShowPlanes("menu.Show Planes",true,true);
@@ -142,12 +144,17 @@ void Viewer::Run()
                 mpMapDrawer->DrawKeyFrames(menuShowKeyFrames, menuShowGraph);
             if(menuShowPoints)
                 mpMapDrawer->DrawMapPoints();   //绘制地图点
+                mpMapDrawer->DrawBoundaryPoints();
             if(menuShowLines)
                 mpMapDrawer->DrawMapLines();    //绘制特征线
-                mpMapDrawer->DrawPlaneIntersections();
+//                mpMapDrawer->DrawPlaneIntersections();
             if(menuShowPlanes)
                 mpMapDrawer->DrawMapPlanes();
 //                mpMapDrawer->DrawMapPlaneBoundaries();
+            if (menuShowPlaneIntersections)
+                mpMapDrawer->DrawPlaneIntersections();
+            if (menuShowInlierLines)
+//                mpMapDrawer->DrawInlierLines();
             if(menuShowSurfels)
 //                mpMapDrawer->DrawSurfels();
 //            if (menuShowCrossPoints)

@@ -106,7 +106,7 @@ namespace ORB_SLAM2
         void AddKeyFrame(KeyFrame* pKF);
         void AddMapPoint(MapPoint* pMP);
         void ComputeCrossLine(const std::vector<MapPlane*> &vpMapPlanes, double threshold, double threshold1);
-        double PointDistanceFromPlane(const cv::Mat &plane, PointCloud::Ptr pointCloud);
+        double PointDistanceFromPlane(const cv::Mat &plane, PointCloud::Ptr pointCloud, double minSize);
         double PointToPlaneDistance(const cv::Mat &plane, pcl::PointXYZRGB &point);
         void AddCrossLineToMap(MapPlane*, MapPlane*,cv::Mat);
         void AddCrossPointToMap(MapPlane*, MapPlane* ,MapPlane*, cv::Mat);
@@ -143,6 +143,12 @@ namespace ORB_SLAM2
         // This avoid that two points are created simultaneously in separate threads (id conflict)
         std::mutex mMutexPointCreation;
         std::mutex mMutexLineCreation;
+        void AddBoundaryPoints(pcl::PointXYZRGB &p);
+        void ClearBoundaryPoints();
+        vector<pcl::PointXYZRGB> GetAllBoundaryPoints();
+
+        void AddInlierLines(pcl::PointXYZRGB &p);
+        vector<pcl::PointXYZRGB> GetAllInlierLines();
 
         void AddMapPlane(MapPlane* pMP);
         void AddMapPlaneBoundary(MapPlane* pMP);
@@ -170,6 +176,7 @@ namespace ORB_SLAM2
         PartialManhattans GetAllPartialManhattanObservations();
 
         void AddBoundaryLine(Eigen::Matrix<double ,6 , 1> &boundaryLine);
+        void JudgeSimilarityBoundary(Eigen::Matrix<double ,6 , 1> &boundaryLine);
         vector<Eigen::Matrix<double ,6 , 1>> GetAllPlaneIntersections();
 
         std::vector<SurfelElement> mvLocalSurfels;
@@ -186,6 +193,8 @@ namespace ORB_SLAM2
 
         std::set<MapLine*> mspMapLines;
         std::vector<Eigen::Matrix<double ,6 , 1>> mspBoundaryLines;
+        std::vector<pcl::PointXYZRGB> BoundaryPoints;
+        std::vector<pcl::PointXYZRGB> InlierLines;
 
         std::set<MapPlane*> mspMapPlanes;
         std::set<MapPlane*> mspMapPlanesBoundaries;

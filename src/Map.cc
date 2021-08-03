@@ -316,6 +316,8 @@ namespace ORB_SLAM2 {
         mspMapPoints.clear();
         mspKeyFrames.clear();
         mspMapLines.clear();
+        mspBoundaryLines.clear();
+        BoundaryPoints.clear();
         mnMaxKFid = 0;
         mvpReferenceMapPoints.clear();
         mvpReferenceMapLines.clear();
@@ -330,6 +332,13 @@ namespace ORB_SLAM2 {
     void Map::AddBoundaryLine(Eigen::Matrix<double ,6 , 1> &boundaryLine) {
         unique_lock<mutex> lock(mMutexMap);
         mspBoundaryLines.emplace_back(boundaryLine);
+    }
+
+    void Map::JudgeSimilarityBoundary(Eigen::Matrix<double ,6 , 1> &boundaryLine) {
+        unique_lock<mutex> lock(mMutexMap);
+        for (int i = 0; i < mspBoundaryLines.size(); ++i) {
+            if (mspBoundaryLines[i](0))
+        }
     }
 
     void Map::EraseMapLine(MapLine *pML) {
@@ -372,31 +381,39 @@ namespace ORB_SLAM2 {
         mspMapPlanes.insert(pMP);
     }
 
-    bool SetSortZ(pcl::PointXYZRGB &p1, pcl::PointXYZRGB &p2) {
-        if (p1.z != p2.z)
-            if (p1.z > p2.z)
-                return true;
-            else
-                return false;
-        else if (p1.z == p2.z)
-            if (p1.x > p2.x)
-                return true;
-            else
-                return false;
+    void Map::AddBoundaryPoints(pcl::PointXYZRGB &p) {
+        unique_lock<mutex> lock(mMutexMap);
+        BoundaryPoints.emplace_back(p);
     }
 
-    double Map::PointDistanceFromPlane(const cv::Mat &plane, PointCloud::Ptr pointCloud) {
+    void Map::AddInlierLines(pcl::PointXYZRGB &p) {
+        unique_lock<mutex> lock(mMutexMap);
+        InlierLines.emplace_back(p);
+    }
+
+    bool SetSortZ(pcl::PointXYZRGB &p1, pcl::PointXYZRGB &p2) {
+        if (p1.z != p2.z)
+            return p1.z < p2.z;
+        else
+            if(p1.x != p2.x)
+                return p1.x < p2.x;
+            else
+                if(p1.y != p2.y)
+                    return p1.y < p2.y;
+    }
+
+    double Map::PointDistanceFromPlane(const cv::Mat &plane, PointCloud::Ptr pointCloud, double minSize) {
         double sum = 0;
-        for(auto p : pointCloud->points){
+        for (int i = 0; i < minSize; ++i){
 //            cout <<"p x" << p.x << endl;
-            double dis = abs(plane.at<float>(0, 0) * p.x +
-                             plane.at<float>(1, 0) * p.y +
-                             plane.at<float>(2, 0) * p.z +
+            double dis = abs(plane.at<float>(0, 0) * pointCloud->points[i].x +
+                             plane.at<float>(1, 0) * pointCloud->points[i].y +
+                             plane.at<float>(2, 0) * pointCloud->points[i].z +
                              plane.at<float>(3, 0));
 //            cout << "compute 1 iteration" << endl;
             sum += dis;
         }
-        return sum;
+        return sum/minSize;
     }
 
     double Map::PointToPlaneDistance(const cv::Mat &plane, pcl::PointXYZRGB &point) {
@@ -408,120 +425,141 @@ namespace ORB_SLAM2 {
     }
 
     void Map::ComputeCrossLine(const std::vector<MapPlane*> &vpMapPlanes, double threshold, double threshold1) {
-//        unique_lock<mutex> lock(mMutexMap);
-        PointCloud::Ptr boundary (new PointCloud());
-            for(int i = 0; i < vpMapPlanes.size(); i++) {
+//        unique_lock<mutex> lock(mMutexMap); threshold 2.0 2.5 .etc
+//        PointCloud::Ptr boundary (new PointCloud());
+        for(int i = 0; i < vpMapPlanes.size(); i++) {
             for (int j = i+1; j < vpMapPlanes.size(); j++) {
+                PointCloud::Ptr boundary (new PointCloud());
+                int minSize = min(vpMapPlanes[i]->mvPlanePoints->points.size(),vpMapPlanes[j]->mvPlanePoints->points.size());
                 cv::Mat p1 = vpMapPlanes[i]->GetWorldPos();
-                cout << "plane parameter p1" << "            " <<p1 <<endl;
-                cout << "v1pmapplane size" <<vpMapPlanes[j]->mvPlanePoints->points.size() << endl;
-                double dis = PointDistanceFromPlane(p1,vpMapPlanes[j]->mvPlanePoints);
-                cout <<"success compute the distance from plane to plane" <<endl;
-                if (dis < threshold)
+                cv::Mat p2 = vpMapPlanes[j]->GetWorldPos();
+                float angle = p1.at<float>(0,0)*p2.at<float>(0,0) + p1.at<float>(1,0)*p2.at<float>(1,0)+
+                              p1.at<float>(2,0)*p1.at<float>(2,0);
+//                cout << "plane parameter p1" << "            " <<p1 <<endl;
+//                cout << "v1pmapplane size" <<vpMapPlanes[j]->mvPlanePoints->points.size() << endl;
+                double dis = PointDistanceFromPlane(p1,vpMapPlanes[j]->mvPlanePoints, minSize);
+                cout << "total distance" << "                    " <<dis <<endl;
+                cout << "total angle" << "           " <<angle <<endl;
+//                cout <<"success compute the distance from plane to plane" <<endl;
+                if (angle < 0.28716 || dis < threshold) {
+//                    threshold = dis;
+//                    if (threshold < 0.5)
+//                        threshold = 0.5;
                     for (auto p : vpMapPlanes[j]->mvPlanePoints->points) {
-                        if (PointToPlaneDistance(p1,p) < threshold1)
+                        cout << "point to plane distance" << "       " << PointToPlaneDistance(p1, p) << endl;
+                        if (PointToPlaneDistance(p1, p) < threshold1)
+                        {
+                            threshold1 = PointToPlaneDistance(p1, p);
+                            if (threshold1 < 0.01)
+                                threshold1 = 0.01;
+//                            cout << "point to plane distance" << "       " << PointToPlaneDistance(p1, p) << endl;
                             boundary->points.emplace_back(p);
+                            AddBoundaryPoints(p);
+                        }
                     }
                     for (auto pp : vpMapPlanes[i]->mvPlanePoints->points) {
-                        if (PointToPlaneDistance(vpMapPlanes[i]->GetWorldPos(),pp) < threshold1)
+                        if (PointToPlaneDistance(vpMapPlanes[j]->GetWorldPos(), pp) < threshold1)
+                        {
+                            threshold1 = PointToPlaneDistance(vpMapPlanes[j]->GetWorldPos(), pp);
+                            if (threshold1 < 0.01)
+                                threshold1 = 0.01;
                             boundary->points.emplace_back(pp);
+                            AddBoundaryPoints(pp);
+                        }
                     }
-                    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-                    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-                    pcl::SACSegmentation<PointT> seg;
-                    seg.setOptimizeCoefficients(true);
-                    seg.setModelType(pcl::SACMODEL_LINE);
-                    seg.setMethodType(pcl::SAC_RANSAC);
-                    seg.setDistanceThreshold(0.01);
+                    cout << "boundary points" << "               " << boundary->points.size() <<endl;
+                    if (boundary->points.size() >= 7)
+                    {
+                        std::sort(boundary->points.begin(), boundary->points.end(), SetSortZ);
+                        cout << "finish sort" << endl;
+                        pcl::PointXYZRGB point1 = boundary->points[0];
+                        pcl::PointXYZRGB point2 = boundary->points[boundary->points.size() - 1];
+//                        pcl::PointXYZRGB ProjectLeft1, ProjectLeft2, ProjectRight1, ProjectRight2;
+//                        pcl::PointXYZRGB UpCrossPoint, DownCrossPoint;
+//                        float tLeft1 = (vpMapPlanes[i]->GetWorldPos()).at<float>(0, 0) * point1.x +
+//                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(1, 0) * point1.y +
+//                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(2, 0) * point1.z +
+//                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(3, 0);
+//                        float tLeft2 = (vpMapPlanes[i]->GetWorldPos()).at<float>(0, 0) * point2.x +
+//                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(1, 0) * point2.y +
+//                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(2, 0) * point2.z +
+//                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(3, 0);
+//                        float tRight1 = (vpMapPlanes[j]->GetWorldPos()).at<float>(0, 0) * point1.x +
+//                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(1, 0) * point1.y +
+//                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(2, 0) * point1.z +
+//                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(3, 0);
+//                        float tRight2 = (vpMapPlanes[j]->GetWorldPos()).at<float>(0, 0) * point2.x +
+//                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(1, 0) * point2.y +
+//                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(2, 0) * point2.z +
+//                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(3, 0);
+//                        ProjectLeft1.x = point1.x - (vpMapPlanes[i]->GetWorldPos()).at<float>(0, 0) * tLeft1;
+//                        ProjectLeft1.y = point1.y - (vpMapPlanes[i]->GetWorldPos()).at<float>(1, 0) * tLeft1;
+//                        ProjectLeft1.z = point1.z - (vpMapPlanes[i]->GetWorldPos()).at<float>(2, 0) * tLeft1;
+//                        ProjectRight1.x = point1.x - (vpMapPlanes[j]->GetWorldPos()).at<float>(0, 0) * tRight1;
+//                        ProjectRight1.y = point1.y - (vpMapPlanes[j]->GetWorldPos()).at<float>(1, 0) * tRight1;
+//                        ProjectRight1.z = point1.z - (vpMapPlanes[j]->GetWorldPos()).at<float>(2, 0) * tRight1;
+//                        ProjectLeft2.x = point2.x - (vpMapPlanes[i]->GetWorldPos()).at<float>(0, 0) * tLeft2;
+//                        ProjectLeft2.y = point2.y - (vpMapPlanes[i]->GetWorldPos()).at<float>(1, 0) * tLeft2;
+//                        ProjectLeft2.z = point2.z - (vpMapPlanes[i]->GetWorldPos()).at<float>(2, 0) * tLeft2;
+//                        ProjectRight2.x = point2.x - (vpMapPlanes[j]->GetWorldPos()).at<float>(0, 0) * tRight2;
+//                        ProjectRight2.y = point2.y - (vpMapPlanes[j]->GetWorldPos()).at<float>(1, 0) * tRight2;
+//                        ProjectRight2.z = point2.z - (vpMapPlanes[j]->GetWorldPos()).at<float>(2, 0) * tRight2;
+//                        cv::Mat pN1 = vpMapPlanes[i]->GetWorldPos();
+//                        cv::Mat pN2 = vpMapPlanes[j]->GetWorldPos();
+//                        pN1 = (cv::Mat_<float>(3, 1) << pN1.at<float>(0), pN1.at<float>(1), pN1.at<float>(2));
+//                        pN2 = (cv::Mat_<float>(3, 1) << pN2.at<float>(0), pN2.at<float>(1), pN2.at<float>(2));
+//                        cv::Mat CrossLine = pN1.cross(pN2);
+//                        cv::Mat A, bup, bdown;
+//                        A = cv::Mat::eye(cv::Size(3, 3), CV_32F);
+//
+//                        A.at<float>(0, 0) = pN1.at<float>(0);
+//                        A.at<float>(1, 0) = pN2.at<float>(0);
+//                        A.at<float>(2, 0) = CrossLine.at<float>(0);
+//                        A.at<float>(0, 1) = pN1.at<float>(1);
+//                        A.at<float>(1, 1) = pN2.at<float>(1);
+//                        A.at<float>(2, 1) = CrossLine.at<float>(1);
+//                        A.at<float>(0, 2) = pN1.at<float>(2);
+//                        A.at<float>(1, 2) = pN2.at<float>(2);
+//                        A.at<float>(2, 2) = CrossLine.at<float>(2);
+//                        A = A.t() * A;
+//                        float b1 = pN1.at<float>(0) * ProjectLeft1.x + pN1.at<float>(1) * ProjectLeft1.y +
+//                                   pN1.at<float>(2) * ProjectLeft1.z;
+//                        float b2 = pN2.at<float>(0) * ProjectRight1.x + pN2.at<float>(1) * ProjectRight1.y +
+//                                   pN2.at<float>(2) * ProjectRight1.z;
+//                        float b3 = CrossLine.at<float>(0) * ProjectLeft1.x + CrossLine.at<float>(1) * ProjectLeft1.y +
+//                                   CrossLine.at<float>(2) * ProjectLeft1.z;
+//                        bup = (cv::Mat_<float>(3, 1) << b1, b2, b3);
+//                        bup = A.t() * bup;
+//                        cv::Mat CrossPointSet = A.inv() * bup;
+//                        UpCrossPoint.x = CrossPointSet.at<float>(0);
+//                        UpCrossPoint.y = CrossPointSet.at<float>(1);
+//                        UpCrossPoint.z = CrossPointSet.at<float>(2);
+//                        float b11 = pN1.at<float>(0) * ProjectLeft2.x + pN1.at<float>(1) * ProjectLeft2.y +
+//                                    pN1.at<float>(2) * ProjectLeft2.z;
+//                        float b22 = pN2.at<float>(0) * ProjectRight2.x + pN2.at<float>(1) * ProjectRight2.y +
+//                                    pN2.at<float>(2) * ProjectRight2.z;
+//                        float b33 = CrossLine.at<float>(0) * ProjectLeft2.x + CrossLine.at<float>(1) * ProjectLeft2.y +
+//                                    CrossLine.at<float>(2) * ProjectLeft2.z;
+//                        bdown = (cv::Mat_<float>(3, 1) << b11, b22, b33);
+//                        bdown = A.t() * bdown;
+//                        cv::Mat DownCrossPointSet = A.inv() * bdown;
+//                        DownCrossPoint.x = DownCrossPointSet.at<float>(0);
+//                        DownCrossPoint.y = DownCrossPointSet.at<float>(1);
+//                        DownCrossPoint.z = DownCrossPointSet.at<float>(2);
+                        Eigen::Matrix<double, 6, 1> boundaryLine;
+                        boundaryLine
+                                << point1.x, point1.y, point1.z, point2.x, point2.y, point2.z;
+                        if (mspBoundaryLines.size() == 0)
+                        {
+                            AddBoundaryLine(boundaryLine);
+                        }
+                        else
+                        {
 
-                    seg.setInputCloud(boundary);
-                    seg.segment(*inliers, *coefficients);
-                    std::cout << "a：" << "        " << coefficients->values[0] << endl;
-                    std::cout << "b：" << "        " << coefficients->values[1] << endl;
-                    std::cout << "c：" << "        " << coefficients->values[2] << endl;
-                    std::cout << "d：" << "        " << coefficients->values[3] << endl;
-                    std::cout << "e：" << "        " << coefficients->values[4] << endl;
-                    std::cout << "f：" << "        " << coefficients->values[5] << endl;
-                    PointCloud::Ptr inlierCloud (new PointCloud());
-                    for (int i = 0; i < inliers->indices.size(); ++i) {
-                        inlierCloud->points.push_back(boundary->points.at(inliers->indices[i]));
+                        }
+                        cout << "finish boundary line" << endl;
                     }
-                    cout <<"finish inlier cloud" << endl;
-                    std::sort(inlierCloud->points.begin(),inlierCloud->points.end(),SetSortZ);
-                    cout <<"finish sort" <<endl;
-                    pcl::PointXYZRGB point1 = inlierCloud->points[0];
-                    pcl::PointXYZRGB point2 = inlierCloud->points[inlierCloud->points.size()-1];
-                    pcl::PointXYZRGB ProjectLeft1, ProjectLeft2, ProjectRight1, ProjectRight2;
-                    pcl::PointXYZRGB UpCrossPoint, DownCrossPoint;
-                    float tLeft1 = (vpMapPlanes[i]->GetWorldPos()).at<float>(0,0)*point1.x +
-                            (vpMapPlanes[i]->GetWorldPos()).at<float>(1,0)*point1.y +
-                            (vpMapPlanes[i]->GetWorldPos()).at<float>(2,0)*point1.z +
-                            (vpMapPlanes[i]->GetWorldPos()).at<float>(3,0);
-                    float tLeft2 = (vpMapPlanes[i]->GetWorldPos()).at<float>(0,0)*point2.x +
-                               (vpMapPlanes[i]->GetWorldPos()).at<float>(1,0)*point2.y +
-                               (vpMapPlanes[i]->GetWorldPos()).at<float>(2,0)*point2.z +
-                               (vpMapPlanes[i]->GetWorldPos()).at<float>(3,0);
-                    float tRight1 = (vpMapPlanes[j]->GetWorldPos()).at<float>(0,0)*point1.x +
-                                   (vpMapPlanes[j]->GetWorldPos()).at<float>(1,0)*point1.y +
-                                   (vpMapPlanes[j]->GetWorldPos()).at<float>(2,0)*point1.z +
-                                   (vpMapPlanes[j]->GetWorldPos()).at<float>(3,0);
-                    float tRight2 = (vpMapPlanes[j]->GetWorldPos()).at<float>(0,0)*point2.x +
-                                    (vpMapPlanes[j]->GetWorldPos()).at<float>(1,0)*point2.y +
-                                    (vpMapPlanes[j]->GetWorldPos()).at<float>(2,0)*point2.z +
-                                    (vpMapPlanes[j]->GetWorldPos()).at<float>(3,0);
-                    ProjectLeft1.x = point1.x - (vpMapPlanes[i]->GetWorldPos()).at<float>(0,0)*tLeft1;
-                    ProjectLeft1.y = point1.y - (vpMapPlanes[i]->GetWorldPos()).at<float>(1,0)*tLeft1;
-                    ProjectLeft1.z = point1.z - (vpMapPlanes[i]->GetWorldPos()).at<float>(2,0)*tLeft1;
-                    ProjectRight1.x = point1.x - (vpMapPlanes[j]->GetWorldPos()).at<float>(0,0)*tRight1;
-                    ProjectRight1.y = point1.y - (vpMapPlanes[j]->GetWorldPos()).at<float>(1,0)*tRight1;
-                    ProjectRight1.z = point1.z - (vpMapPlanes[j]->GetWorldPos()).at<float>(2,0)*tRight1;
-                    ProjectLeft2.x = point2.x - (vpMapPlanes[i]->GetWorldPos()).at<float>(0,0)*tLeft2;
-                    ProjectLeft2.y = point2.y - (vpMapPlanes[i]->GetWorldPos()).at<float>(1,0)*tLeft2;
-                    ProjectLeft2.z = point2.z - (vpMapPlanes[i]->GetWorldPos()).at<float>(2,0)*tLeft2;
-                    ProjectRight2.x = point2.x - (vpMapPlanes[j]->GetWorldPos()).at<float>(0,0)*tRight2;
-                    ProjectRight2.y = point2.y - (vpMapPlanes[j]->GetWorldPos()).at<float>(1,0)*tRight2;
-                    ProjectRight2.z = point2.z - (vpMapPlanes[j]->GetWorldPos()).at<float>(2,0)*tRight2;
-                    cv::Mat pN1 = vpMapPlanes[i]->GetWorldPos();
-                    cv::Mat pN2 = vpMapPlanes[j]->GetWorldPos();
-                    pN1 = (cv::Mat_<float>(3,1) << pN1.at<float>(0), pN1.at<float>(1), pN1.at<float>(2));
-                    pN2 = (cv::Mat_<float>(3, 1) << pN2.at<float>(0), pN2.at<float>(1), pN2.at<float>(2));
-                    cv::Mat CrossLine = pN1.cross(pN2);
-                    cv::Mat A, bup, bdown;
-                    A = cv::Mat::eye(cv::Size(3, 3), CV_32F);
-
-                    A.at<float>(0, 0) = pN1.at<float>(0);
-                    A.at<float>(1, 0) = pN2.at<float>(0);
-                    A.at<float>(2, 0) = CrossLine.at<float>(0);
-                    A.at<float>(0, 1) = pN1.at<float>(1);
-                    A.at<float>(1, 1) = pN2.at<float>(1);
-                    A.at<float>(2, 1) = CrossLine.at<float>(1);
-                    A.at<float>(0, 2) = pN1.at<float>(2);
-                    A.at<float>(1, 2) = pN2.at<float>(2);
-                    A.at<float>(2, 2) = CrossLine.at<float>(2);
-                    A = A.t() * A;
-                    float b1 = pN1.at<float>(0)*ProjectLeft1.x + pN1.at<float>(1)*ProjectLeft1.y + pN1.at<float>(2)*ProjectLeft1.z;
-                    float b2 = pN2.at<float>(0)*ProjectRight1.x + pN2.at<float>(1)*ProjectRight1.y + pN2.at<float>(2)*ProjectRight1.z;
-                    float b3 = CrossLine.at<float>(0)*ProjectLeft1.x + CrossLine.at<float>(1)*ProjectLeft1.y + CrossLine.at<float>(2)*ProjectLeft1.z;
-                    bup = (cv::Mat_<float>(3, 1) << b1, b2, b3);
-                    bup = A.t() * bup;
-                    cv::Mat CrossPointSet = A.inv() * bup ;
-                    UpCrossPoint.x = CrossPointSet.at<float>(0);
-                    UpCrossPoint.y = CrossPointSet.at<float>(1);
-                    UpCrossPoint.z = CrossPointSet.at<float>(2);
-                    float b11 = pN1.at<float>(0)*ProjectLeft2.x + pN1.at<float>(1)*ProjectLeft2.y + pN1.at<float>(2)*ProjectLeft2.z;
-                    float b22 = pN2.at<float>(0)*ProjectRight2.x + pN2.at<float>(1)*ProjectRight2.y + pN2.at<float>(2)*ProjectRight2.z;
-                    float b33 = CrossLine.at<float>(0)*ProjectLeft2.x + CrossLine.at<float>(1)*ProjectLeft2.y + CrossLine.at<float>(2)*ProjectLeft2.z;
-                    bdown = (cv::Mat_<float>(3, 1) << b11, b22, b33);
-                    bdown = A.t() * bdown;
-                    cv::Mat DownCrossPointSet = A.inv() * bdown;
-                    DownCrossPoint.x = DownCrossPointSet.at<float>(0);
-                    DownCrossPoint.y = DownCrossPointSet.at<float>(1);
-                    DownCrossPoint.z = DownCrossPointSet.at<float>(2);
-                    Eigen::Matrix<double ,6 , 1> boundaryLine;
-                    boundaryLine << UpCrossPoint.x, UpCrossPoint.y, UpCrossPoint.z, DownCrossPoint.x, DownCrossPoint.y, DownCrossPoint.z;
-                    AddBoundaryLine(boundaryLine);
-                    cout << "finish boundary line" <<endl;
-
+                }
             }
         }
             cout << "finish this step" << endl;
@@ -548,9 +586,20 @@ namespace ORB_SLAM2 {
         return vector<MapPlane *>(mspMapPlanesBoundaries.begin(), mspMapPlanesBoundaries.end());
     }
 
+    vector<pcl::PointXYZRGB> Map::GetAllInlierLines() {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<pcl::PointXYZRGB>(InlierLines.begin(), InlierLines.end());
+    }
+
+
     vector<cv::Mat> Map::GetAllCrossLines() {
         unique_lock<mutex> lock(mMutexMap);
         return vector<cv::Mat>(CrossLineDraw.begin(),CrossLineDraw.end());
+    }
+
+    vector<pcl::PointXYZRGB> Map::GetAllBoundaryPoints() {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<pcl::PointXYZRGB>(BoundaryPoints.begin(), BoundaryPoints.end());
     }
 
     vector<cv::Mat> Map::GetAllCrossPoints() {

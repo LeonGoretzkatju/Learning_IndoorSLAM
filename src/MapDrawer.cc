@@ -85,6 +85,46 @@ namespace ORB_SLAM2
         glEnd();
     }
 
+    void MapDrawer::DrawBoundaryPoints() {
+        const vector<pcl::PointXYZRGB> &vpMPs = mpMap->GetAllBoundaryPoints();
+        if(vpMPs.empty())
+            return;
+
+        glPointSize(7);
+        glBegin(GL_POINTS);
+        glColor3f(1.0,0.0,0.0);     //黑色
+
+        for(size_t i=0, iend=vpMPs.size(); i<iend;i++)
+        {
+//            if(vpMPs[i]->isBad())
+//                continue;
+            pcl::PointXYZRGB pos = vpMPs[i];
+//        cout << "point\t" << i << ": " << pos.at<float>(0) << ", " << pos.at<float>(1) << ", " << pos.at<float>(2) << endl;
+            glVertex3f(pos.x,pos.y,pos.z);
+        }
+        glEnd();
+    }
+
+    void MapDrawer::DrawInlierLines() {
+        const vector<pcl::PointXYZRGB> &vpMPs = mpMap->GetAllInlierLines();
+        if(vpMPs.empty())
+            return;
+
+        glPointSize(7);
+        glBegin(GL_POINTS);
+        glColor3f(0.0,0.0,1.0);     //黑色
+
+        for(size_t i=0, iend=vpMPs.size(); i<iend;i++)
+        {
+//            if(vpMPs[i]->isBad())
+//                continue;
+            pcl::PointXYZRGB pos = vpMPs[i];
+//        cout << "point\t" << i << ": " << pos.at<float>(0) << ", " << pos.at<float>(1) << ", " << pos.at<float>(2) << endl;
+            glVertex3f(pos.x,pos.y,pos.z);
+        }
+        glEnd();
+    }
+
     void MapDrawer::DrawMapLines()
     {
         const vector<MapLine*> &vpMLs = mpMap->GetAllMapLines();
@@ -140,7 +180,7 @@ namespace ORB_SLAM2
 
         glLineWidth(5);
         glBegin ( GL_LINES );
-        glColor3f(0.0,0.0,0.0);    //黑色
+        glColor3f(0.0,1.0,0.0);    //黑色
         for(size_t i=0, iend=vpMLs.size(); i<iend; i++)
         {
 

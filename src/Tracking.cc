@@ -316,7 +316,7 @@ namespace ORB_SLAM2 {
 
                 PlaneMatcher pmatcher(mfDThRef, mfAThRef, mfVerTh, mfParTh);
                 pmatcher.SearchMapByCoefficients(mCurrentFrame, mpMap->GetAllMapPlanes());
-                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 15, 0.1);
+//                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 1.2, 0.5);
 //                if (mCurrentFrame.mnPlaneNum == 2)
 //                {
 //                    DetectCrossLine();
@@ -440,7 +440,8 @@ namespace ORB_SLAM2 {
                 MapPlane *pMP = mCurrentFrame.mvpMapPlanes[i];
                 if (pMP) {
                     pMP->UpdateCoefficientsAndPoints(mCurrentFrame, i);
-                    pMP->UpdateComputePlaneBoundary(mCurrentFrame, i);
+                    mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 2.8, 0.5);
+                    // pMP->UpdateComputePlaneBoundary(mCurrentFrame, i);
                 } else if (!mCurrentFrame.mvbPlaneOutlier[i]) {
                     mCurrentFrame.mbNewPlane = true;
                 }
@@ -630,8 +631,10 @@ namespace ORB_SLAM2 {
                 pNewMP->AddObservation(pKFini,i);
                 pKFini->AddMapPlane(pNewMP, i);
                 pNewMP->UpdateCoefficientsAndPoints();
-                pNewMP->UpdateComputePlaneBoundary();
+                // pNewMP->UpdateComputePlaneBoundary();
                 mpMap->AddMapPlane(pNewMP);
+                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 2.8, 0.5);
+//                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 51, 0.00002);
                 mpMap->AddMapPlaneBoundary(pNewMP);
 
                 mCurrentFrame.mvpMapPlanes[i] = pNewMP;
@@ -1997,7 +2000,7 @@ namespace ORB_SLAM2 {
         threadPlanes.join();
 
         pmatcher.SearchMapByCoefficients(mCurrentFrame, mpMap->GetAllMapPlanes());
-
+        mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 2.8, 0.5);
 //        cout << "tracking localmap, pose before opti" << endl << mCurrentFrame.mTcw << endl;
         Optimizer::PoseOptimization(&mCurrentFrame);
 //        cout << "tracking localmap, pose after opti" << mCurrentFrame.mTcw << endl;
@@ -2318,8 +2321,10 @@ namespace ORB_SLAM2 {
                 pNewMP->AddObservation(pKF,i);
                 pKF->AddMapPlane(pNewMP, i);
                 pNewMP->UpdateCoefficientsAndPoints();
-                pNewMP->UpdateComputePlaneBoundary();
+                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 2.8, 0.5);
+                // pNewMP->UpdateComputePlaneBoundary();
                 mpMap->AddMapPlane(pNewMP);
+//                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 51, 0.00002);
                 mpMap->AddMapPlaneBoundary(pNewMP);
             }
 

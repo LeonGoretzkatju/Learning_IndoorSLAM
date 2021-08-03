@@ -471,32 +471,32 @@ namespace ORB_SLAM2{
 
         mvPlanePoints = coarseCloud;
 
-        if (mvPlanePoints->points.size() > 4) {
-            pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-            pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-            pcl::SACSegmentation<PointT> seg;
-            seg.setOptimizeCoefficients(true);
-            seg.setModelType(pcl::SACMODEL_PLANE);
-            seg.setMethodType(pcl::SAC_RANSAC);
-            seg.setDistanceThreshold(0.1);
-
-            seg.setInputCloud(mvPlanePoints);
-            seg.segment(*inliers, *coefficients);
-
-            mWorldPos.at<float>(0, 0) = coefficients->values[0];
-            mWorldPos.at<float>(1, 0) = coefficients->values[1];
-            mWorldPos.at<float>(2, 0) = coefficients->values[2];
-            mWorldPos.at<float>(3, 0) = coefficients->values[3];
-
-            PointCloud::Ptr inlierCloud (new PointCloud());
-            std::vector<int> indices = inliers->indices;
-            std::vector<PointT, Eigen::aligned_allocator<PointT>> points = coarseCloud->points;
-            for (auto &i : indices) {
-                inlierCloud->push_back(points[i]);
-            }
-
-            mvPlanePoints = inlierCloud;
-        }
+//        if (mvPlanePoints->points.size() > 4) {
+//            pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+//            pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+//            pcl::SACSegmentation<PointT> seg;
+//            seg.setOptimizeCoefficients(true);
+//            seg.setModelType(pcl::SACMODEL_PLANE);
+//            seg.setMethodType(pcl::SAC_RANSAC);
+//            seg.setDistanceThreshold(0.1);
+//
+//            seg.setInputCloud(mvPlanePoints);
+//            seg.segment(*inliers, *coefficients);
+//
+//            mWorldPos.at<float>(0, 0) = coefficients->values[0];
+//            mWorldPos.at<float>(1, 0) = coefficients->values[1];
+//            mWorldPos.at<float>(2, 0) = coefficients->values[2];
+//            mWorldPos.at<float>(3, 0) = coefficients->values[3];
+//
+//            PointCloud::Ptr inlierCloud (new PointCloud());
+//            std::vector<int> indices = inliers->indices;
+//            std::vector<PointT, Eigen::aligned_allocator<PointT>> points = coarseCloud->points;
+//            for (auto &i : indices) {
+//                inlierCloud->push_back(points[i]);
+//            }
+//
+//            mvPlanePoints = inlierCloud;
+//        }
     }
 
     void MapPlane::UpdateComputePlaneBoundary(ORB_SLAM2::Frame &pF, int id) {
