@@ -317,6 +317,7 @@ namespace ORB_SLAM2 {
         mspKeyFrames.clear();
         mspMapLines.clear();
         mspBoundaryLines.clear();
+        mspDirectionVector.clear();
         BoundaryPoints.clear();
         mnMaxKFid = 0;
         mvpReferenceMapPoints.clear();
@@ -334,12 +335,30 @@ namespace ORB_SLAM2 {
         mspBoundaryLines.emplace_back(boundaryLine);
     }
 
-    void Map::JudgeSimilarityBoundary(Eigen::Matrix<double ,6 , 1> &boundaryLine) {
+    void Map::AddDirectionVector(Eigen::Matrix<double, 3, 1> &DirectionVector) {
         unique_lock<mutex> lock(mMutexMap);
-        for (int i = 0; i < mspBoundaryLines.size(); ++i) {
-            if (mspBoundaryLines[i](0))
-        }
+        mspDirectionVector.emplace_back(DirectionVector);
     }
+
+//    void JudgeSimilarityDirectionVector(Eigen::Matrix<double, 3, 1> &DirectionVector, Eigen::Matrix<double ,6 , 1> &boundaryLine) {
+////        unique_lock<mutex> lock(mMutexMap);
+//        cout << "stop at there" << endl;
+//        cout <<"mspDirectionvector size" << "     " << mspDirectionVector.size() << endl;
+//        for (int i = 0; i < mspBoundaryLines.size(); ++i) {
+//            float angle = DirectionVector[0]*mspDirectionVector[i][0] + DirectionVector[1]*mspDirectionVector[i][1] + DirectionVector[2]*mspDirectionVector[i][2];
+////            cout <<"angle of direction vector" << "     " <<angle <<endl;
+//            if (abs(angle) > 0.8)
+//            {
+//                continue;
+//            }
+//            else
+//            {
+//                mspDirectionVector.emplace_back(DirectionVector);
+//                mspBoundaryLines.emplace_back(boundaryLine);
+////                cout << "finish emplace back" << endl;
+//            }
+//        }
+//    }
 
     void Map::EraseMapLine(MapLine *pML) {
         unique_lock<mutex> lock(mMutexMap);
@@ -446,7 +465,7 @@ namespace ORB_SLAM2 {
 //                    if (threshold < 0.5)
 //                        threshold = 0.5;
                     for (auto p : vpMapPlanes[j]->mvPlanePoints->points) {
-                        cout << "point to plane distance" << "       " << PointToPlaneDistance(p1, p) << endl;
+//                        cout << "point to plane distance" << "       " << PointToPlaneDistance(p1, p) << endl;
                         if (PointToPlaneDistance(p1, p) < threshold1)
                         {
                             threshold1 = PointToPlaneDistance(p1, p);
@@ -474,89 +493,207 @@ namespace ORB_SLAM2 {
                         cout << "finish sort" << endl;
                         pcl::PointXYZRGB point1 = boundary->points[0];
                         pcl::PointXYZRGB point2 = boundary->points[boundary->points.size() - 1];
-//                        pcl::PointXYZRGB ProjectLeft1, ProjectLeft2, ProjectRight1, ProjectRight2;
-//                        pcl::PointXYZRGB UpCrossPoint, DownCrossPoint;
-//                        float tLeft1 = (vpMapPlanes[i]->GetWorldPos()).at<float>(0, 0) * point1.x +
-//                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(1, 0) * point1.y +
-//                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(2, 0) * point1.z +
-//                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(3, 0);
-//                        float tLeft2 = (vpMapPlanes[i]->GetWorldPos()).at<float>(0, 0) * point2.x +
-//                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(1, 0) * point2.y +
-//                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(2, 0) * point2.z +
-//                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(3, 0);
-//                        float tRight1 = (vpMapPlanes[j]->GetWorldPos()).at<float>(0, 0) * point1.x +
-//                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(1, 0) * point1.y +
-//                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(2, 0) * point1.z +
-//                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(3, 0);
-//                        float tRight2 = (vpMapPlanes[j]->GetWorldPos()).at<float>(0, 0) * point2.x +
-//                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(1, 0) * point2.y +
-//                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(2, 0) * point2.z +
-//                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(3, 0);
-//                        ProjectLeft1.x = point1.x - (vpMapPlanes[i]->GetWorldPos()).at<float>(0, 0) * tLeft1;
-//                        ProjectLeft1.y = point1.y - (vpMapPlanes[i]->GetWorldPos()).at<float>(1, 0) * tLeft1;
-//                        ProjectLeft1.z = point1.z - (vpMapPlanes[i]->GetWorldPos()).at<float>(2, 0) * tLeft1;
-//                        ProjectRight1.x = point1.x - (vpMapPlanes[j]->GetWorldPos()).at<float>(0, 0) * tRight1;
-//                        ProjectRight1.y = point1.y - (vpMapPlanes[j]->GetWorldPos()).at<float>(1, 0) * tRight1;
-//                        ProjectRight1.z = point1.z - (vpMapPlanes[j]->GetWorldPos()).at<float>(2, 0) * tRight1;
-//                        ProjectLeft2.x = point2.x - (vpMapPlanes[i]->GetWorldPos()).at<float>(0, 0) * tLeft2;
-//                        ProjectLeft2.y = point2.y - (vpMapPlanes[i]->GetWorldPos()).at<float>(1, 0) * tLeft2;
-//                        ProjectLeft2.z = point2.z - (vpMapPlanes[i]->GetWorldPos()).at<float>(2, 0) * tLeft2;
-//                        ProjectRight2.x = point2.x - (vpMapPlanes[j]->GetWorldPos()).at<float>(0, 0) * tRight2;
-//                        ProjectRight2.y = point2.y - (vpMapPlanes[j]->GetWorldPos()).at<float>(1, 0) * tRight2;
-//                        ProjectRight2.z = point2.z - (vpMapPlanes[j]->GetWorldPos()).at<float>(2, 0) * tRight2;
-//                        cv::Mat pN1 = vpMapPlanes[i]->GetWorldPos();
-//                        cv::Mat pN2 = vpMapPlanes[j]->GetWorldPos();
-//                        pN1 = (cv::Mat_<float>(3, 1) << pN1.at<float>(0), pN1.at<float>(1), pN1.at<float>(2));
-//                        pN2 = (cv::Mat_<float>(3, 1) << pN2.at<float>(0), pN2.at<float>(1), pN2.at<float>(2));
-//                        cv::Mat CrossLine = pN1.cross(pN2);
-//                        cv::Mat A, bup, bdown;
-//                        A = cv::Mat::eye(cv::Size(3, 3), CV_32F);
-//
-//                        A.at<float>(0, 0) = pN1.at<float>(0);
-//                        A.at<float>(1, 0) = pN2.at<float>(0);
-//                        A.at<float>(2, 0) = CrossLine.at<float>(0);
-//                        A.at<float>(0, 1) = pN1.at<float>(1);
-//                        A.at<float>(1, 1) = pN2.at<float>(1);
-//                        A.at<float>(2, 1) = CrossLine.at<float>(1);
-//                        A.at<float>(0, 2) = pN1.at<float>(2);
-//                        A.at<float>(1, 2) = pN2.at<float>(2);
-//                        A.at<float>(2, 2) = CrossLine.at<float>(2);
+                        pcl::PointXYZRGB ProjectLeft1, ProjectLeft2, ProjectRight1, ProjectRight2;
+                        pcl::PointXYZRGB UpCrossPoint, DownCrossPoint;
+                        float tLeft1 = (vpMapPlanes[i]->GetWorldPos()).at<float>(0, 0) * point1.x +
+                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(1, 0) * point1.y +
+                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(2, 0) * point1.z +
+                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(3, 0);
+                        float tLeft2 = (vpMapPlanes[i]->GetWorldPos()).at<float>(0, 0) * point2.x +
+                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(1, 0) * point2.y +
+                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(2, 0) * point2.z +
+                                       (vpMapPlanes[i]->GetWorldPos()).at<float>(3, 0);
+                        float tRight1 = (vpMapPlanes[j]->GetWorldPos()).at<float>(0, 0) * point1.x +
+                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(1, 0) * point1.y +
+                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(2, 0) * point1.z +
+                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(3, 0);
+                        float tRight2 = (vpMapPlanes[j]->GetWorldPos()).at<float>(0, 0) * point2.x +
+                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(1, 0) * point2.y +
+                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(2, 0) * point2.z +
+                                        (vpMapPlanes[j]->GetWorldPos()).at<float>(3, 0);
+                        ProjectLeft1.x = point1.x - (vpMapPlanes[i]->GetWorldPos()).at<float>(0, 0) * tLeft1;
+                        ProjectLeft1.y = point1.y - (vpMapPlanes[i]->GetWorldPos()).at<float>(1, 0) * tLeft1;
+                        ProjectLeft1.z = point1.z - (vpMapPlanes[i]->GetWorldPos()).at<float>(2, 0) * tLeft1;
+                        ProjectRight1.x = point1.x - (vpMapPlanes[j]->GetWorldPos()).at<float>(0, 0) * tRight1;
+                        ProjectRight1.y = point1.y - (vpMapPlanes[j]->GetWorldPos()).at<float>(1, 0) * tRight1;
+                        ProjectRight1.z = point1.z - (vpMapPlanes[j]->GetWorldPos()).at<float>(2, 0) * tRight1;
+                        ProjectLeft2.x = point2.x - (vpMapPlanes[i]->GetWorldPos()).at<float>(0, 0) * tLeft2;
+                        ProjectLeft2.y = point2.y - (vpMapPlanes[i]->GetWorldPos()).at<float>(1, 0) * tLeft2;
+                        ProjectLeft2.z = point2.z - (vpMapPlanes[i]->GetWorldPos()).at<float>(2, 0) * tLeft2;
+                        ProjectRight2.x = point2.x - (vpMapPlanes[j]->GetWorldPos()).at<float>(0, 0) * tRight2;
+                        ProjectRight2.y = point2.y - (vpMapPlanes[j]->GetWorldPos()).at<float>(1, 0) * tRight2;
+                        ProjectRight2.z = point2.z - (vpMapPlanes[j]->GetWorldPos()).at<float>(2, 0) * tRight2;
+                        cv::Mat pN1 = vpMapPlanes[i]->GetWorldPos();
+                        cv::Mat pN2 = vpMapPlanes[j]->GetWorldPos();
+                        pN1 = (cv::Mat_<float>(3, 1) << pN1.at<float>(0), pN1.at<float>(1), pN1.at<float>(2));
+                        pN2 = (cv::Mat_<float>(3, 1) << pN2.at<float>(0), pN2.at<float>(1), pN2.at<float>(2));
+                        cv::Mat CrossLine = pN1.cross(pN2);
+                        cv::Mat A, bup, bdown;
+                        A = cv::Mat::eye(cv::Size(3, 3), CV_32F);
+
+                        A.at<float>(0, 0) = pN1.at<float>(0);
+                        A.at<float>(1, 0) = pN2.at<float>(0);
+                        A.at<float>(2, 0) = CrossLine.at<float>(0);
+                        A.at<float>(0, 1) = pN1.at<float>(1);
+                        A.at<float>(1, 1) = pN2.at<float>(1);
+                        A.at<float>(2, 1) = CrossLine.at<float>(1);
+                        A.at<float>(0, 2) = pN1.at<float>(2);
+                        A.at<float>(1, 2) = pN2.at<float>(2);
+                        A.at<float>(2, 2) = CrossLine.at<float>(2);
+                        float result = CrossLine.at<float>(0) * (ProjectLeft1.x - ProjectRight1.x) + CrossLine.at<float>(1) * (ProjectLeft1.y - ProjectRight1.y) +
+                                       CrossLine.at<float>(2) * (ProjectLeft1.z - ProjectRight1.z);
+                        cout << "final result" << "                   " << result << endl;
 //                        A = A.t() * A;
 //                        float b1 = pN1.at<float>(0) * ProjectLeft1.x + pN1.at<float>(1) * ProjectLeft1.y +
 //                                   pN1.at<float>(2) * ProjectLeft1.z;
+                        float b1 = -pN1.at<float>(3);
 //                        float b2 = pN2.at<float>(0) * ProjectRight1.x + pN2.at<float>(1) * ProjectRight1.y +
 //                                   pN2.at<float>(2) * ProjectRight1.z;
-//                        float b3 = CrossLine.at<float>(0) * ProjectLeft1.x + CrossLine.at<float>(1) * ProjectLeft1.y +
-//                                   CrossLine.at<float>(2) * ProjectLeft1.z;
-//                        bup = (cv::Mat_<float>(3, 1) << b1, b2, b3);
+                        float b2 = -pN2.at<float>(3);
+                        float b3 = CrossLine.at<float>(0) * ProjectLeft1.x + CrossLine.at<float>(1) * ProjectLeft1.y +
+                                   CrossLine.at<float>(2) * ProjectLeft1.z;
+                        bup = (cv::Mat_<float>(3, 1) << b1, b2, b3);
 //                        bup = A.t() * bup;
-//                        cv::Mat CrossPointSet = A.inv() * bup;
-//                        UpCrossPoint.x = CrossPointSet.at<float>(0);
-//                        UpCrossPoint.y = CrossPointSet.at<float>(1);
-//                        UpCrossPoint.z = CrossPointSet.at<float>(2);
+                        cv::Mat CrossPointSet = A.inv() * bup;
+                        UpCrossPoint.x = CrossPointSet.at<float>(0);
+                        UpCrossPoint.y = CrossPointSet.at<float>(1);
+                        UpCrossPoint.z = CrossPointSet.at<float>(2);
 //                        float b11 = pN1.at<float>(0) * ProjectLeft2.x + pN1.at<float>(1) * ProjectLeft2.y +
 //                                    pN1.at<float>(2) * ProjectLeft2.z;
 //                        float b22 = pN2.at<float>(0) * ProjectRight2.x + pN2.at<float>(1) * ProjectRight2.y +
 //                                    pN2.at<float>(2) * ProjectRight2.z;
-//                        float b33 = CrossLine.at<float>(0) * ProjectLeft2.x + CrossLine.at<float>(1) * ProjectLeft2.y +
-//                                    CrossLine.at<float>(2) * ProjectLeft2.z;
-//                        bdown = (cv::Mat_<float>(3, 1) << b11, b22, b33);
+                        float b11 = -pN1.at<float>(3);
+                        float b22 = -pN2.at<float>(3);
+                        float b33 = CrossLine.at<float>(0) * ProjectRight2.x + CrossLine.at<float>(1) * ProjectRight2.y +
+                                    CrossLine.at<float>(2) * ProjectRight2.z;
+                        bdown = (cv::Mat_<float>(3, 1) << b11, b22, b33);
 //                        bdown = A.t() * bdown;
-//                        cv::Mat DownCrossPointSet = A.inv() * bdown;
-//                        DownCrossPoint.x = DownCrossPointSet.at<float>(0);
-//                        DownCrossPoint.y = DownCrossPointSet.at<float>(1);
-//                        DownCrossPoint.z = DownCrossPointSet.at<float>(2);
+                        cv::Mat DownCrossPointSet = A.inv() * bdown;
+                        DownCrossPoint.x = DownCrossPointSet.at<float>(0);
+                        DownCrossPoint.y = DownCrossPointSet.at<float>(1);
+                        DownCrossPoint.z = DownCrossPointSet.at<float>(2);
                         Eigen::Matrix<double, 6, 1> boundaryLine;
+                        Eigen::Matrix<double, 3, 1> DirectionVector;
                         boundaryLine
-                                << point1.x, point1.y, point1.z, point2.x, point2.y, point2.z;
-                        if (mspBoundaryLines.size() == 0)
+                                << ProjectLeft1.x, ProjectLeft1.y, ProjectLeft1.z, ProjectLeft2.x, ProjectLeft2.y, ProjectLeft2.z;
+                        double base = sqrt(pow((ProjectLeft2.x - ProjectLeft1.x), 2) + pow((ProjectLeft2.y - ProjectLeft1.y), 2) + pow((ProjectLeft2.z - ProjectLeft1.z), 2));
+                        DirectionVector << (ProjectLeft2.x - ProjectLeft1.x)/base, (ProjectLeft2.y - ProjectLeft1.y)/base, (ProjectLeft2.z - ProjectLeft1.z)/base;
+//                        AddBoundaryLine(boundaryLine);
+//                            mspBoundaryLines.emplace_back(boundaryLine);
+//                            mspDirectionVector.emplace_back(DirectionVector);
+//                        AddDirectionVector(DirectionVector);
+//                        cout << "mspBoundaryLines" << "                      " << mspBoundaryLines.size() << endl;
+//                        cout << "mspDirectionVectorSize" << "             " << mspDirectionVector.size() <<endl;
+                        if (TupleDirectVector.empty())
                         {
+                            auto TupleDirect = std::make_tuple(vpMapPlanes[i]->mnId, vpMapPlanes[j]->mnId, DirectionVector);
+                            TupleDirectVector.emplace_back(TupleDirect);
                             AddBoundaryLine(boundaryLine);
+                        }
+                        else if (TupleDirectVector.size() == 1)
+                        {
+                            auto id1 = std::get<0>(TupleDirectVector[0]);
+                            auto id2 = std::get<1>(TupleDirectVector[1]);
+                            if (vpMapPlanes[i]->mnId != id1 || vpMapPlanes[j]->mnId != id2)
+                            {
+                                auto TupleDirect = std::make_tuple(vpMapPlanes[i]->mnId, vpMapPlanes[j]->mnId, DirectionVector);
+                                TupleDirectVector.emplace_back(TupleDirect);
+                                AddBoundaryLine(boundaryLine);
+                            }
                         }
                         else
                         {
+                            bool flag = false;
+                            bool sum = false;
+                            for (int k = 0; k < TupleDirectVector.size(); ++k) {
+                                auto idOne = std::get<0>(TupleDirectVector[k]);
+                                auto idTwo = std::get<1>(TupleDirectVector[k]);
+                                if (vpMapPlanes[i]->mnId == idOne && vpMapPlanes[j]->mnId == idTwo)
+                                {
+                                    float angle = DirectionVector[0]*std::get<2>(TupleDirectVector[k])(0) +
+                                            DirectionVector[1]*std::get<2>(TupleDirectVector[k])(1) +
+                                            DirectionVector[2]*std::get<2>(TupleDirectVector[k])(2);
+                                    if (angle > 0)
+                                        angle = acos(angle);
+                                    else
+                                        angle = CV_PI - acos(angle);
+                                    cout <<"angle of direction vector" << "     " <<angle <<endl;
+                                    if (angle >= 4*CV_PI/9 && angle <= 0.5*CV_PI)
+                                    {
+                                        auto Match = std::make_tuple(vpMapPlanes[i]->mnId, vpMapPlanes[j]->mnId, DirectionVector);
+                                        TupleDirectVector.emplace_back(Match);
+                                    }
+                                    flag = true;
+                                }
+                                else
+                                {
+                                    flag = false;
+                                }
+                                sum += flag;
+                            }
+                            if (!flag)
+                            {
+                                AddBoundaryLine(boundaryLine);
+                            }
 
                         }
+//                        float mCurrentLineSize;
+//                        if (mspBoundaryLines.size() == 0)
+//                        {
+//                            AddBoundaryLine(boundaryLine);
+////                            mspBoundaryLines.emplace_back(boundaryLine);
+////                            mspDirectionVector.emplace_back(DirectionVector);
+//                            AddDirectionVector(DirectionVector);
+//                            cout << "mspBoundaryLines" << "                      " << mspBoundaryLines.size() << endl;
+//                            cout << "mspDirectionVectorSize" << "             " << mspDirectionVector.size() <<endl;
+//                            mCurrentLineSize = 1;
+//                        }
+//                        else
+//                        {
+//                            float angle = DirectionVector[0]*mspDirectionVector[mCurrentLineSize-1](0) +
+//                                          DirectionVector[1]*mspDirectionVector[mCurrentLineSize-1](1) +
+//                                          DirectionVector[2]*mspDirectionVector[mCurrentLineSize-1](2);
+//                            if (angle > 0)
+//                                angle = acos(angle);
+//                            else
+//                                angle = CV_PI - acos(angle);
+//                            cout <<"angle of direction vector" << "     " <<angle <<endl;
+//                            if (angle >= 4*CV_PI/9 && angle <= 0.5*CV_PI)
+//                            {
+//
+//                            }
+//                            bool flag = false;
+//                            std::vector<bool> VectorBool;
+//                            for (int i = 0; i < mspBoundaryLines.size(); ++i) {
+//                                cout << "mspDirectionVector" << "             " << mspDirectionVector[i] << endl;
+//                                float angle = DirectionVector[0]*mspDirectionVector[i](0) + DirectionVector[1]*mspDirectionVector[i](1) + DirectionVector[2]*mspDirectionVector[i](2);
+//                                if (angle > 0)
+//                                    angle = acos(angle);
+//                                else
+//                                    angle = CV_PI - acos(angle);
+//                                cout <<"angle of direction vector" << "     " <<angle <<endl;
+//                                if (angle >= 0.0 && angle <= 4*CV_PI/9)
+//                                {
+//                                    flag = false;
+//                                }
+//                                else
+//                                {
+//                                    flag = true;
+//                                }
+//                                VectorBool.emplace_back(flag);
+//                            }
+//                            bool flag1 = true;
+//                            for (int k = 0; k < VectorBool.size(); ++k) {
+//                                flag1 = flag1 * VectorBool[k];
+//                            }
+//                            if (flag1)
+//                            {
+//                                AddBoundaryLine(boundaryLine);
+//                                AddDirectionVector(DirectionVector);
+//                                cout << "mspBoundaryLines" << "                      " << mspBoundaryLines.size() << endl;
+//                                cout << "mspDirectionVectorSize" << "             " << mspDirectionVector.size() <<endl;
+//                            }
+//                        }
                         cout << "finish boundary line" << endl;
                     }
                 }

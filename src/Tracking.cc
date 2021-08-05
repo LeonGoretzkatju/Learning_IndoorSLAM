@@ -440,7 +440,7 @@ namespace ORB_SLAM2 {
                 MapPlane *pMP = mCurrentFrame.mvpMapPlanes[i];
                 if (pMP) {
                     pMP->UpdateCoefficientsAndPoints(mCurrentFrame, i);
-                    mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 2.8, 0.5);
+                    mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 2.2, 0.41);
                     // pMP->UpdateComputePlaneBoundary(mCurrentFrame, i);
                 } else if (!mCurrentFrame.mvbPlaneOutlier[i]) {
                     mCurrentFrame.mbNewPlane = true;
@@ -633,7 +633,7 @@ namespace ORB_SLAM2 {
                 pNewMP->UpdateCoefficientsAndPoints();
                 // pNewMP->UpdateComputePlaneBoundary();
                 mpMap->AddMapPlane(pNewMP);
-                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 2.8, 0.5);
+//                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 2.8, 0.5);
 //                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 51, 0.00002);
                 mpMap->AddMapPlaneBoundary(pNewMP);
 
@@ -2000,7 +2000,7 @@ namespace ORB_SLAM2 {
         threadPlanes.join();
 
         pmatcher.SearchMapByCoefficients(mCurrentFrame, mpMap->GetAllMapPlanes());
-        mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 2.8, 0.5);
+//        mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 2.8, 0.5);
 //        cout << "tracking localmap, pose before opti" << endl << mCurrentFrame.mTcw << endl;
         Optimizer::PoseOptimization(&mCurrentFrame);
 //        cout << "tracking localmap, pose after opti" << mCurrentFrame.mTcw << endl;
@@ -2321,7 +2321,7 @@ namespace ORB_SLAM2 {
                 pNewMP->AddObservation(pKF,i);
                 pKF->AddMapPlane(pNewMP, i);
                 pNewMP->UpdateCoefficientsAndPoints();
-                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 2.8, 0.5);
+//                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 2.8, 0.5);
                 // pNewMP->UpdateComputePlaneBoundary();
                 mpMap->AddMapPlane(pNewMP);
 //                mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 51, 0.00002);

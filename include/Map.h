@@ -176,8 +176,9 @@ namespace ORB_SLAM2
         PartialManhattans GetAllPartialManhattanObservations();
 
         void AddBoundaryLine(Eigen::Matrix<double ,6 , 1> &boundaryLine);
-        void JudgeSimilarityBoundary(Eigen::Matrix<double ,6 , 1> &boundaryLine);
         vector<Eigen::Matrix<double ,6 , 1>> GetAllPlaneIntersections();
+        void AddDirectionVector(Eigen::Matrix<double, 3, 1> &DirectionVector);
+        void JudgeSimilarityDirectionVector(Eigen::Matrix<double, 3, 1> &DirectionVector, Eigen::Matrix<double ,6 , 1> &boundaryLine);
 
         std::vector<SurfelElement> mvLocalSurfels;
         std::vector<SurfelElement> mvInactiveSurfels;
@@ -186,6 +187,7 @@ namespace ORB_SLAM2
         std::tuple<unsigned long,unsigned long,cv::Mat> CrossLineSet;
         vector<cv::Mat> CrossLineDraw;
         vector<std::tuple<unsigned long,unsigned long,cv::Mat>> CrossLineSets;
+        vector<std::tuple<long unsigned int, long unsigned int, Eigen::Matrix<double, 3, 1>>> TupleDirectVector;
         std::tuple<unsigned long ,unsigned long ,unsigned long ,cv::Mat> CrossPointSet;
         vector<cv::Mat> CrossPointDraw;
         vector<std::tuple<unsigned long ,unsigned long ,unsigned long ,cv::Mat>> CrossPointSets;
@@ -193,6 +195,7 @@ namespace ORB_SLAM2
 
         std::set<MapLine*> mspMapLines;
         std::vector<Eigen::Matrix<double ,6 , 1>> mspBoundaryLines;
+        std::vector<Eigen::Matrix<double ,3 , 1>> mspDirectionVector;
         std::vector<pcl::PointXYZRGB> BoundaryPoints;
         std::vector<pcl::PointXYZRGB> InlierLines;
 
