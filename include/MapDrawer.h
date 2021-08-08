@@ -41,6 +41,7 @@ public:
     void DrawMapPoints();
     void DrawMapLines();
     void DrawMapPlanes();
+    void DrawNoPlaneArea();
     void DrawInlierLines();
     void DrawBoundaryPoints();
     void DrawPlaneIntersections();

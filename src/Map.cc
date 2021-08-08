@@ -397,6 +397,7 @@ namespace ORB_SLAM2 {
     void Map::AddMapPlane(MapPlane *pMP) {
         unique_lock<mutex> lock(mMutexMap);
         pMP->mvPlanePoints.get()->points;
+        pMP->mvNoPlanePoints.get()->points;
         mspMapPlanes.insert(pMP);
     }
 
@@ -461,16 +462,16 @@ namespace ORB_SLAM2 {
                 cout << "total angle" << "           " <<angle <<endl;
 //                cout <<"success compute the distance from plane to plane" <<endl;
                 if (angle < 0.28716 || dis < threshold) {
-//                    threshold = dis;
-//                    if (threshold < 0.5)
-//                        threshold = 0.5;
+                    threshold = dis;
+                    if (threshold < 0.5)
+                        threshold = 0.5;
                     for (auto p : vpMapPlanes[j]->mvPlanePoints->points) {
 //                        cout << "point to plane distance" << "       " << PointToPlaneDistance(p1, p) << endl;
                         if (PointToPlaneDistance(p1, p) < threshold1)
                         {
                             threshold1 = PointToPlaneDistance(p1, p);
-                            if (threshold1 < 0.01)
-                                threshold1 = 0.01;
+                            if (threshold1 < 0.005)
+                                threshold1 = 0.005;
 //                            cout << "point to plane distance" << "       " << PointToPlaneDistance(p1, p) << endl;
                             boundary->points.emplace_back(p);
                             AddBoundaryPoints(p);

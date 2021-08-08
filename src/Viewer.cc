@@ -71,12 +71,11 @@ void Viewer::Run()
         pangolin::Var<bool> menuFollowCamera("menu.Follow Camera", true, true);
         pangolin::Var<bool> menuShowPoints("menu.Show Points", true, true);
         pangolin::Var<bool> menuShowLines("menu.Show Lines", true, true);
-        pangolin::Var<bool> menuShowInlierLines("menu.Show Inlier Lines", true, true);
         pangolin::Var<bool> menuShowPlaneIntersections("menu.ShowPlaneIntersections", true, true);
-        pangolin::Var<bool> menuShowCrossLines("menu.Show CrossLines", true, true);
-        pangolin::Var<bool> menuShowCrossPoints("menu.Show CrossPoints", true, true);
+        pangolin::Var<bool> menuShowBoundaryPoints("menu.Show BoundaryPoints", true, true);
         pangolin::Var<bool> menuShowPlanes("menu.Show Planes",true,true);
         pangolin::Var<bool> menuShowSurfels("menu.Show Surfels",true,true);
+        pangolin::Var<bool> menuShowNoPlaneArea("menu.ShowNoPlaneArea",true,true);
         pangolin::Var<bool> menuShowKeyFrames("menu.Show KeyFrames",true,true);
         pangolin::Var<bool> menuShowGraph("menu.Show Graph",true,true);
         pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode",false,true);
@@ -144,6 +143,7 @@ void Viewer::Run()
                 mpMapDrawer->DrawKeyFrames(menuShowKeyFrames, menuShowGraph);
             if(menuShowPoints)
                 mpMapDrawer->DrawMapPoints();   //绘制地图点
+            if (menuShowBoundaryPoints)
                 mpMapDrawer->DrawBoundaryPoints();
             if(menuShowLines)
                 mpMapDrawer->DrawMapLines();    //绘制特征线
@@ -151,9 +151,11 @@ void Viewer::Run()
             if(menuShowPlanes)
                 mpMapDrawer->DrawMapPlanes();
 //                mpMapDrawer->DrawMapPlaneBoundaries();
+//            if (menuShowNoPlaneArea)
+//                mpMapDrawer->DrawNoPlaneArea();
             if (menuShowPlaneIntersections)
                 mpMapDrawer->DrawPlaneIntersections();
-            if (menuShowInlierLines)
+//            if (menuShowInlierLines)
 //                mpMapDrawer->DrawInlierLines();
             if(menuShowSurfels)
 //                mpMapDrawer->DrawSurfels();
@@ -164,9 +166,9 @@ void Viewer::Run()
 
             pangolin::FinishFrame();
 
-//            cv::Mat im = mpFrameDrawer->DrawFrame();
-//            cv::imshow("ManhattanSLAM: Current Frame", im);
-//            cv::waitKey(mT);
+            cv::Mat im = mpFrameDrawer->DrawFrame();
+            cv::imshow("ManhattanSLAM: Current Frame", im);
+            cv::waitKey(mT);
 
             if(menuReset)
             {
@@ -175,8 +177,8 @@ void Viewer::Run()
                 menuShowPoints = true;
                 menuShowLines = true;
                 menuShowPlanes = true;
-                menuShowCrossLines = true;
-                menuShowCrossPoints = true;
+                menuShowBoundaryPoints = true;
+                menuShowNoPlaneArea = true;
                 menuLocalizationMode = false;
                 if(bLocalizationMode)
                     mpSystem->DeactivateLocalizationMode();

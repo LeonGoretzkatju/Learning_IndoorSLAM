@@ -129,6 +129,7 @@ namespace ORB_SLAM2 {
         int mBlue;
 
         PointCloud::Ptr mvPlanePoints;
+        PointCloud::Ptr mvNoPlanePoints;
         PointCloud::Ptr copyPlanePoints;
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_boundary;
         //Tracking counters

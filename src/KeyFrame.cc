@@ -49,7 +49,7 @@ namespace ORB_SLAM2
             mbToBeErased(false), mbBad(false), mHalfBaseline(F.mb/2), mpMap(pMap),
             NL(F.NL), mvKeyLines(F.mvKeylinesUn), mvDepthLine(F.mvDepthLine), mvKeyLineFunctions(F.mvKeyLineFunctions), mLineDescriptors(F.mLdesc),
             mvpMapLines(F.mvpMapLines), mvPlaneCoefficients(F.mvPlaneCoefficients), mnPlaneNum(F.mnPlaneNum),
-            mvpMapPlanes(F.mvpMapPlanes), mbNewPlane(F.mbNewPlane), mvPlanePoints(F.mvPlanePoints),
+            mvpMapPlanes(F.mvpMapPlanes), mbNewPlane(F.mbNewPlane), mvPlanePoints(F.mvPlanePoints), mvNoPlanePoints(mvNoPlanePoints),
             mvpParallelPlanes(F.mvpParallelPlanes), mvpVerticalPlanes(F.mvpVerticalPlanes)
     {
         mnId=nNextId++;

@@ -62,9 +62,39 @@ bool PlaneDetection::readDepthImage(const cv::Mat depthImg, const cv::Mat &K, co
 	}
 	return true;
 }
-
-void PlaneDetection::runPlaneDetection()
+int number = 0;
+cv::Mat PlaneDetection::runPlaneDetection()
 {
 	plane_filter.run(&cloud, &plane_vertices_, &seg_img_);
 	plane_num_ = (int)plane_vertices_.size();
+    cv::Mat mask_img=cv::Mat(240, 320, CV_8UC1);
+    for (int row = 0; row < 240; ++row) {
+        for (int col = 0; col < 320; ++col){
+            int numP=plane_filter.membershipImg.at<int>(row, col);
+            if(numP>=0)
+            {
+                mask_img.at<uchar>(row,col)=255;
+            }
+            else if (plane_filter.membershipImg.at<int>(row, col) < 0){
+                mask_img.at<uchar >(row,col)=0;
+                plane_filter.membershipImg.at<int>(row, col) = plane_num_;
+            }
+        }
+    }
+    static cv::Mat kernel_erode = getStructuringElement(cv::MORPH_RECT, cv::Size(3, 5));
+    erode(mask_img, mask_img, kernel_erode);
+
+    static cv::Mat kernel_dilate = getStructuringElement(cv::MORPH_RECT, cv::Size(3, 5));
+    dilate(mask_img, mask_img, kernel_dilate);
+
+    static cv::Mat kernel_dilate2 = getStructuringElement(cv::MORPH_RECT, cv::Size(3, 5));
+    dilate(mask_img, mask_img, kernel_dilate2);
+
+    static cv::Mat kernel_erode2 = getStructuringElement(cv::MORPH_RECT, cv::Size(3, 5));
+    erode(mask_img, mask_img, kernel_erode2);
+//    cv::GaussianBlur(mask_img, mask_img, cv::Size(3,3), 0.5, 0.5);
+//    imwrite("/home/nuc/NYU2/mask/"+to_string(number)+".png", mask_img);
+//    number ++ ;
+//    cout << "number is " << "    " << number << endl;
+    return mask_img;
 }

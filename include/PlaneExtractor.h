@@ -39,6 +39,7 @@ class PlaneDetection
 {
 public:
 	ImagePointCloud cloud;
+	ImagePointCloud NoPlaneAreaCloud;
 	ahc::PlaneFitter< ImagePointCloud > plane_filter;
     std::vector<std::vector<int>> plane_vertices_; // vertex indices each plane contains
 	cv::Mat seg_img_; // segmentation image
@@ -53,7 +54,7 @@ public:
 
 	bool readDepthImage(const cv::Mat depthImg, const cv::Mat &K, const float &depthMapFactor);
 
-	void runPlaneDetection();
+	cv::Mat runPlaneDetection();
 
 };
 

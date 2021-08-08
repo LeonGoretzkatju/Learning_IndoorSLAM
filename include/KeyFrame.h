@@ -224,6 +224,7 @@ namespace ORB_SLAM2
 
         //For PointCloud
         std::vector<PointCloud> mvPlanePoints;
+        PointCloud mvNoPlanePoints;
         std::vector<cv::Mat> mvPlaneCoefficients;
         int mnPlaneNum;
         std::vector<MapPlane*> mvpMapPlanes;

@@ -205,8 +205,27 @@ namespace ORB_SLAM2
             float ib = pMP->mBlue;
             float norm = sqrt(ir*ir + ig*ig + ib*ib);
             glColor3f(ir/norm, ig/norm, ib/norm);
-
             for(auto& p : pMP->mvPlanePoints.get()->points){
+                glVertex3f(p.x,p.y,p.z);
+            }
+        }
+        glEnd();
+    }
+
+    void MapDrawer::DrawNoPlaneArea() {
+        const vector<MapPlane*> &vpMPs = mpMap->GetAllMapPlanes();
+        if(vpMPs.empty())
+            return;
+        glPointSize(mPointSize*2);
+        glBegin(GL_POINTS);
+
+        for(auto pMP : vpMPs){
+            float ir = 0.0;
+            float ig = 0.0;
+            float ib = 0.0;
+            float norm = sqrt(ir*ir + ig*ig + ib*ib);
+            glColor3f(ir/norm, ig/norm, ib/norm);
+            for(auto& p : pMP->mvNoPlanePoints.get()->points){
                 glVertex3f(p.x,p.y,p.z);
             }
         }

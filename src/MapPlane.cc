@@ -18,7 +18,7 @@ namespace ORB_SLAM2{
 
     MapPlane::MapPlane(const cv::Mat &Pos, KeyFrame *pRefKF, Map* pMap):
             mnFirstKFid(pRefKF->mnId), mnFirstFrame(pRefKF->mnFrameId), mpRefKF(pRefKF), mnVisible(1), mnFound(1),
-            mnBALocalForKF(0), mnBAGlobalForKF(0), mvPlanePoints(new PointCloud()), mpMap(pMap), nObs(0),
+            mnBALocalForKF(0), mnBAGlobalForKF(0), mvPlanePoints(new PointCloud()), mvNoPlanePoints(new PointCloud()), mpMap(pMap), nObs(0),
             mbBad(false), mnFuseCandidateForKF(0), mpReplaced(static_cast<MapPlane*>(NULL)), mnLoopPlaneForKF(0),
             mnLoopVerticalPlaneForKF(0), mnLoopParallelPlaneForKF(0), mnCorrectedByKF(0),
             mnCorrectedReference(0) {
@@ -240,6 +240,7 @@ namespace ORB_SLAM2{
             KeyFrame* pKF = ob.first;
 
             *pMP->mvPlanePoints += pKF->mvPlanePoints[ob.second];
+            *pMP->mvNoPlanePoints += pKF->mvNoPlanePoints;
 
             if(!pMP->IsInKeyFrame(pKF))
             {
@@ -314,6 +315,7 @@ namespace ORB_SLAM2{
             else
             {
                 pKF->mvPlanePoints[pMP->GetIndexInVerticalKeyFrame(pKF)] += *(pKF->GetMapVerticalPlane(ob.second)->mvPlanePoints);
+                // pKF->mvNoPlanePoints[pMP->GetIndexInVerticalKeyFrame(pKF)] += *(pKF->GetMapVerticalPlane(ob.second)->mvNoPlanePoints);
                 pKF->EraseMapVerticalPlaneMatch(ob.second);
             }
         }
@@ -344,6 +346,7 @@ namespace ORB_SLAM2{
             else
             {
                 pKF->mvPlanePoints[pMP->GetIndexInParallelKeyFrame(pKF)] += *(pKF->GetMapParallelPlane(ob.second)->mvPlanePoints);
+                // pKF->mvNoPlanePoints[pMP->GetIndexInParallelKeyFrame(pKF)] += *(pKF->GetMapParallelPlane(ob.second)->mvNoPlanePoints);
                 pKF->EraseMapParallelPlaneMatch(ob.second);
             }
         }
@@ -376,19 +379,29 @@ namespace ORB_SLAM2{
 
     void MapPlane::UpdateCoefficientsAndPoints() {
         PointCloud::Ptr combinedPoints (new PointCloud());
+        PointCloud::Ptr combinedNoPlanePoints(new PointCloud());
         map<KeyFrame*, size_t> observations = GetObservations();
         for(auto & observation : observations){
             KeyFrame* frame = observation.first;
             int id = observation.second;
-
+            cout << " id id" <<  "    " << id << endl;
             PointCloud::Ptr points (new PointCloud());
+            PointCloud::Ptr NoPlanePoints(new PointCloud());
             pcl::transformPointCloud(frame->mvPlanePoints[id], *points, Converter::toMatrix4d(frame->GetPoseInverse()));
+//            cout << "frame no plane observation size" << frame->mvNoPlanePoints[0].size() << endl;
+            pcl::transformPointCloud(frame->mvNoPlanePoints, *NoPlanePoints,
+                                     Converter::toMatrix4d(frame->GetPoseInverse()));
+            *combinedNoPlanePoints += *NoPlanePoints;
 
             *combinedPoints += *points;
         }
 
         pcl::VoxelGrid<PointT>  voxel;
         voxel.setLeafSize(0.2, 0.2, 0.2);
+
+        PointCloud::Ptr coarseCloudNoPlane(new PointCloud());
+        voxel.setInputCloud(combinedNoPlanePoints);
+        voxel.filter(*coarseCloudNoPlane);
 
         PointCloud::Ptr coarseCloud(new PointCloud());
         voxel.setInputCloud(combinedPoints);
@@ -397,6 +410,7 @@ namespace ORB_SLAM2{
 //        MaxPointDistanceFromPlane(mWorldPos, coarseCloud);
 
         mvPlanePoints = coarseCloud;
+        mvNoPlanePoints = coarseCloudNoPlane;
 
 //        if (mvPlanePoints->points.size() > 4) {
 //            pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
@@ -454,11 +468,13 @@ namespace ORB_SLAM2{
     void MapPlane::UpdateCoefficientsAndPoints(ORB_SLAM2::Frame &pF, int id) {
 
         PointCloud::Ptr combinedPoints (new PointCloud());
-
+        PointCloud::Ptr combinedNoPlanePoints(new PointCloud());
         Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat( pF.mTcw );
+//        cout << "frame no plane observation size" << pF.mvNoPlanePoints[id].size() << endl;
         pcl::transformPointCloud(pF.mvPlanePoints[id], *combinedPoints, T.inverse().matrix());
-
+        pcl::transformPointCloud(pF.mvNoPlanePoints, *combinedNoPlanePoints, T.inverse().matrix());
         *combinedPoints += *mvPlanePoints;
+        *combinedNoPlanePoints += *mvNoPlanePoints;
 
         pcl::VoxelGrid<PointT>  voxel;
         voxel.setLeafSize(0.2, 0.2, 0.2);
@@ -467,10 +483,14 @@ namespace ORB_SLAM2{
         voxel.setInputCloud(combinedPoints);
         voxel.filter(*coarseCloud);
 
+        PointCloud::Ptr coarseCloudNoPlane(new PointCloud());
+        voxel.setInputCloud(combinedNoPlanePoints);
+        voxel.filter(*coarseCloudNoPlane);
+
 //        MaxPointDistanceFromPlane(mWorldPos, coarseCloud);
 
         mvPlanePoints = coarseCloud;
-
+        mvNoPlanePoints = coarseCloudNoPlane;
 //        if (mvPlanePoints->points.size() > 4) {
 //            pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
 //            pcl::PointIndices::Ptr inliers(new pcl::PointIndices);

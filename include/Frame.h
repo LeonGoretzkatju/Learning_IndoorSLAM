@@ -198,6 +198,8 @@ namespace ORB_SLAM2
 
         // ORB descriptor, each row associated to a keypoint.
         cv::Mat mDescriptors, mDescriptorsRight;
+        cv::Mat nonPlaneArea;
+
 
         // MapPoints associated to keypoints, NULL pointer if no association.
         std::vector<MapPoint*> mvpMapPoints;
@@ -247,6 +249,7 @@ namespace ORB_SLAM2
         static bool mbInitialComputations;
 
         std::vector<PointCloud> mvPlanePoints;
+        PointCloud mvNoPlanePoints;
         std::vector<cv::Mat> mvPlaneCoefficients;
         std::vector<MapPlane*> mvpMapPlanes;
         std::vector<MapPlane*> mvpParallelPlanes;

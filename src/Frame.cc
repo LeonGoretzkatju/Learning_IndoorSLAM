@@ -61,7 +61,7 @@ namespace ORB_SLAM2 {
               mbNewPlane(frame.mbNewPlane),
               mvpMapPlanes(frame.mvpMapPlanes), mnPlaneNum(frame.mnPlaneNum), mvbPlaneOutlier(frame.mvbPlaneOutlier),
               mvpParallelPlanes(frame.mvpParallelPlanes), mvpVerticalPlanes(frame.mvpVerticalPlanes),
-              mvPlanePoints(frame.mvPlanePoints) {
+              mvPlanePoints(frame.mvPlanePoints), mvNoPlanePoints(frame.mvNoPlanePoints) {
         for (int i = 0; i < FRAME_GRID_COLS; i++)
             for (int j = 0; j < FRAME_GRID_ROWS; j++)
                 mGrid[i][j] = frame.mGrid[i][j];
@@ -165,6 +165,7 @@ namespace ORB_SLAM2 {
         thread threadLines(&ORB_SLAM2::Frame::ExtractLSD, this, imGray);
         thread threadPlanes(&ORB_SLAM2::Frame::ExtractPlanes, this, imRGB, imDepth, K, depthMapFactor);
         Params params_;
+//        nonPlaneArea = 1 -
         ExtractInseg(imRGB,imDepth,K,params_);
         threadPoints.join();
         threadLines.join();
@@ -908,7 +909,56 @@ namespace ORB_SLAM2 {
     void Frame::ExtractPlanes(const cv::Mat &imRGB, const cv::Mat &imDepth, const cv::Mat &K, const float &depthMapFactor) {
         planeDetector.readColorImage(imRGB);
         planeDetector.readDepthImage(imDepth, K, depthMapFactor);
-        planeDetector.runPlaneDetection();
+        cv::Mat mask_img = planeDetector.runPlaneDetection();
+        cout << mask_img.size << endl;
+        int vertex_id = 0;
+        planeDetector.NoPlaneAreaCloud.vertices.resize(240 * 320);
+        planeDetector.NoPlaneAreaCloud.verticesColour.resize(240 * 320);
+        planeDetector.NoPlaneAreaCloud.w = 320;
+        planeDetector.NoPlaneAreaCloud.h = 240;
+        for (int i = 0; i < mask_img.rows; ++i) {
+            for (int j = 0; j < mask_img.cols; ++j) {
+                if ((i+2) < mask_img.rows && (j+2) < mask_img.cols && (i-2) >= 0 && (j-2) >= 0)
+                {
+                    if ((int)mask_img.at<uchar>(i,j) == 0 && (int)mask_img.at<uchar>(i,j+2) == 0 &&
+                            (int)mask_img.at<uchar>(i+2,j) == 0 && (int)mask_img.at<uchar>(i+2,j+2) == 0 &&
+                            (int)mask_img.at<uchar>(i-2,j) == 0 && (int)mask_img.at<uchar>(i,j-2) == 0 &&
+                            (int)mask_img.at<uchar>(i-2,j-2) == 0 && 2*i <= mask_img.rows && 2*j <= mask_img.cols)
+                    {
+                        double z = (double)(imDepth.at<unsigned short>(2*i, 2*j)) * depthMapFactor;
+                        if (_isnan(z))
+                        {
+                            planeDetector.NoPlaneAreaCloud.vertices[vertex_id++] = VertexType(0, 0, z);
+                            continue;
+                        }
+                        double x = ((double)j - K.at<float>(0, 2)) * z / K.at<float>(0, 0);
+                        double y = ((double)i - K.at<float>(1, 2)) * z / K.at<float>(1, 1);
+                        planeDetector.NoPlaneAreaCloud.vertices[vertex_id++] = VertexType(x, y, z);
+                    }
+                }
+            }
+        }
+
+        PointCloud::Ptr inputCloudNoPlane(new PointCloud());
+        for (auto & vertice : planeDetector.NoPlaneAreaCloud.vertices) {
+            PointT p1;
+            p1.x = (float) vertice[0];
+            p1.y = (float) vertice[1];
+            p1.z = (float) vertice[2];
+            p1.r = static_cast<uint8_t>(0.0);
+            p1.g = static_cast<uint8_t>(0.0);
+            p1.b = static_cast<uint8_t>(0.0);
+            inputCloudNoPlane->points.emplace_back(p1);
+        }
+
+        pcl::VoxelGrid<PointT> voxel;
+        voxel.setLeafSize(0.2, 0.2, 0.2);
+
+        PointCloud::Ptr coarseCloudNoPlane(new PointCloud());
+        voxel.setInputCloud(inputCloudNoPlane);
+        voxel.filter(*coarseCloudNoPlane);
+
+        mvNoPlanePoints += *coarseCloudNoPlane;
 
         auto disTh = Config::Get<double>("Plane.DistanceThreshold");
 
@@ -973,6 +1023,9 @@ namespace ORB_SLAM2 {
 
             mvPlanePoints.push_back(*coarseCloud);
             mvPlaneCoefficients.push_back(coef);
+            planeDetector.NoPlaneAreaCloud.vertices.clear();
+            planeDetector.seg_img_.release();
+            planeDetector.color_img_.release();
         }
 
 ////        int r = 107;
