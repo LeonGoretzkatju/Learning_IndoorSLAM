@@ -192,6 +192,24 @@ namespace ORB_SLAM2
         glEnd();
     }
 
+    void MapDrawer::DrawCrossPointInMap(){
+        const vector<cv::Mat> &vpMPs = mpMap->GetAllCrossPointInMap();
+        if(vpMPs.empty())
+            return;
+        glPointSize(mPointSize*5);
+        glBegin(GL_POINTS);
+
+        for(auto pMP : vpMPs){
+            float ir = 255.0;
+            float ig = 255.0;
+            float ib = 0.0;
+            float norm = sqrt(ir*ir + ig*ig + ib*ib);
+            glColor3f(ir/norm, ig/norm, ib/norm);
+            glVertex3f(pMP.at<float>(0),pMP.at<float>(1),pMP.at<float>(2));
+        }
+        glEnd();
+    }
+
     void MapDrawer::DrawMapPlanes() {
         const vector<MapPlane*> &vpMPs = mpMap->GetAllMapPlanes();
         if(vpMPs.empty())
@@ -228,6 +246,52 @@ namespace ORB_SLAM2
             for(auto& p : pMP->mvNoPlanePoints.get()->points){
                 glVertex3f(p.x,p.y,p.z);
             }
+        }
+        glEnd();
+    }
+
+    void MapDrawer::SaveMeshMode(const string& filename) {
+        const vector<MapPlane*> &vpMPs = mpMap->GetAllMapPlanes();
+        pcl::PointCloud<pcl::PointXYZ>::Ptr meshCloud(new pcl::PointCloud<pcl::PointXYZ>());
+        for (auto pMP : vpMPs) {
+            int ir = pMP->mRed;
+            int ig = pMP->mGreen;
+            int ib = pMP->mBlue;
+
+
+            for (auto &planePoint : pMP->mvPlanePoints.get()->points) {
+                int i = 0;
+                pcl::PointXYZ p;
+                p.x = planePoint.x;
+                p.y = planePoint.y;
+                p.z = planePoint.z;
+                meshCloud->points.push_back(p);
+            }
+        }
+        for (auto &noplanepoint : mpMap->DrawNonPlaneArea.points) {
+            int i = 0;
+            pcl::PointXYZ p;
+            p.x = noplanepoint.x;
+            p.y = noplanepoint.y;
+            p.z = noplanepoint.z;
+            meshCloud->points.push_back(p);
+        }
+        if (meshCloud->points.size() > 0) {
+            pcl::PolygonMesh cloud_mesh;
+            pcl::io::savePLYFile(filename, *meshCloud);
+        }
+    }
+
+    void MapDrawer::DrawNonPlaneArea() {
+        glPointSize(mPointSize*2);
+        glBegin(GL_POINTS);
+        float ir = 0.0;
+        float ig = 0.0;
+        float ib = 0.0;
+        float norm = sqrt(ir*ir + ig*ig + ib*ib);
+        glColor3f(ir/norm, ig/norm, ib/norm);
+        for (auto p: mpMap->DrawNonPlaneArea.points) {
+            glVertex3f(p.x,p.y,p.z);
         }
         glEnd();
     }

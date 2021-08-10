@@ -152,6 +152,8 @@ protected:
     void DetectCrossPoint();
     void DetectCrossLine();
     void CheckReplacedInLastFrame();
+    void ComputeNonPlaneAreaInCurrentFrame(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> &combinedPoints);
+    void ComputeCameraCenterToPlaneAndCompletion(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> &combinedPoints, float threshold);
     bool TrackReferenceKeyFrame();
     void UpdateLastFrame();
     bool TrackWithMotionModel();

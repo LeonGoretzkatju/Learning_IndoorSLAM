@@ -906,59 +906,88 @@ namespace ORB_SLAM2 {
         }
     }
 
+    int ite = 0;
+
     void Frame::ExtractPlanes(const cv::Mat &imRGB, const cv::Mat &imDepth, const cv::Mat &K, const float &depthMapFactor) {
         planeDetector.readColorImage(imRGB);
         planeDetector.readDepthImage(imDepth, K, depthMapFactor);
         cv::Mat mask_img = planeDetector.runPlaneDetection();
+        cv::Mat depth_img = imDepth;
         cout << mask_img.size << endl;
         int vertex_id = 0;
         planeDetector.NoPlaneAreaCloud.vertices.resize(240 * 320);
         planeDetector.NoPlaneAreaCloud.verticesColour.resize(240 * 320);
         planeDetector.NoPlaneAreaCloud.w = 320;
         planeDetector.NoPlaneAreaCloud.h = 240;
+        cv::Mat maskCopy_img = cv::Mat(240, 320, CV_8UC1);
         for (int i = 0; i < mask_img.rows; ++i) {
             for (int j = 0; j < mask_img.cols; ++j) {
-                if ((i+2) < mask_img.rows && (j+2) < mask_img.cols && (i-2) >= 0 && (j-2) >= 0)
-                {
-                    if ((int)mask_img.at<uchar>(i,j) == 0 && (int)mask_img.at<uchar>(i,j+2) == 0 &&
-                            (int)mask_img.at<uchar>(i+2,j) == 0 && (int)mask_img.at<uchar>(i+2,j+2) == 0 &&
-                            (int)mask_img.at<uchar>(i-2,j) == 0 && (int)mask_img.at<uchar>(i,j-2) == 0 &&
-                            (int)mask_img.at<uchar>(i-2,j-2) == 0 && 2*i <= mask_img.rows && 2*j <= mask_img.cols)
+//                if ((i+2) < mask_img.rows && (j+2) < mask_img.cols && (i-2) >= 0 && (j-2) >= 0)
+//                {
+//                    if ((int)mask_img.at<uchar>(i,j) == 0 && (int)mask_img.at<uchar>(i,j+2) == 0 &&
+//                            (int)mask_img.at<uchar>(i+2,j) == 0 && (int)mask_img.at<uchar>(i+2,j+2) == 0 &&
+//                            (int)mask_img.at<uchar>(i-2,j) == 0 && (int)mask_img.at<uchar>(i,j-2) == 0 &&
+//                            (int)mask_img.at<uchar>(i-2,j-2) == 0 && 2*i <= mask_img.rows && 2*j <= mask_img.cols)
+                    if ((int)mask_img.at<uchar>(i,j) == 0)
                     {
-                        double z = (double)(imDepth.at<unsigned short>(2*i, 2*j)) * depthMapFactor;
+                        double z = (double)(depth_img.at<unsigned short>(2*i, 2*j)) * depthMapFactor;
                         if (_isnan(z))
                         {
                             planeDetector.NoPlaneAreaCloud.vertices[vertex_id++] = VertexType(0, 0, z);
                             continue;
                         }
-                        double x = ((double)j - K.at<float>(0, 2)) * z / K.at<float>(0, 0);
-                        double y = ((double)i - K.at<float>(1, 2)) * z / K.at<float>(1, 1);
+                        double x = ((double)2*j - K.at<float>(0, 2)) * z / K.at<float>(0, 0);
+                        double y = ((double)2*i - K.at<float>(1, 2)) * z / K.at<float>(1, 1);
                         planeDetector.NoPlaneAreaCloud.vertices[vertex_id++] = VertexType(x, y, z);
+                        maskCopy_img.at<uchar>(i,j) = 255;
                     }
-                }
+                    else
+                        maskCopy_img.at<uchar>(i,j) = 0;
+//                }
             }
         }
+//        cout << "vertices size" << "       "  << planeDetector.NoPlaneAreaCloud.vertices.size() << endl;
+        imwrite("/home/nuc/NYU2/maskCopyimg/"+ to_string(ite)+".png", maskCopy_img);
+        ite ++;
 
         PointCloud::Ptr inputCloudNoPlane(new PointCloud());
-        for (auto & vertice : planeDetector.NoPlaneAreaCloud.vertices) {
+        for (int w = 0; w < vertex_id; ++w) {
             PointT p1;
-            p1.x = (float) vertice[0];
-            p1.y = (float) vertice[1];
-            p1.z = (float) vertice[2];
+            p1.x = (float) planeDetector.NoPlaneAreaCloud.vertices[w][0];
+            p1.y = (float) planeDetector.NoPlaneAreaCloud.vertices[w][1];
+            p1.z = (float) planeDetector.NoPlaneAreaCloud.vertices[w][2];
             p1.r = static_cast<uint8_t>(0.0);
             p1.g = static_cast<uint8_t>(0.0);
             p1.b = static_cast<uint8_t>(0.0);
-            inputCloudNoPlane->points.emplace_back(p1);
+            inputCloudNoPlane->points.push_back(p1);
         }
+//        for (auto & vertice : planeDetector.NoPlaneAreaCloud.vertices) {
+//            PointT p1;
+//            p1.x = (float) vertice[0];
+//            p1.y = (float) vertice[1];
+//            p1.z = (float) vertice[2];
+//            p1.r = static_cast<uint8_t>(0.0);
+//            p1.g = static_cast<uint8_t>(0.0);
+//            p1.b = static_cast<uint8_t>(0.0);
+//            inputCloudNoPlane->points.push_back(p1);
+//        }
 
-        pcl::VoxelGrid<PointT> voxel;
-        voxel.setLeafSize(0.2, 0.2, 0.2);
+        pcl::VoxelGrid<PointT> voxel1;
+        voxel1.setLeafSize(0.2, 0.2, 0.2);
 
         PointCloud::Ptr coarseCloudNoPlane(new PointCloud());
-        voxel.setInputCloud(inputCloudNoPlane);
-        voxel.filter(*coarseCloudNoPlane);
-
-        mvNoPlanePoints += *coarseCloudNoPlane;
+        voxel1.setInputCloud(inputCloudNoPlane);
+        voxel1.filter(*coarseCloudNoPlane);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr meshCloud(new pcl::PointCloud<pcl::PointXYZ>());
+        mvNoPlanePoints = *coarseCloudNoPlane;
+        pcl::PointXYZ p;
+        for (auto &noplanepoint : mvNoPlanePoints.points) {
+            int i = 0;
+            p.x = noplanepoint.x;
+            p.y = noplanepoint.y;
+            p.z = noplanepoint.z;
+            meshCloud->points.push_back(p);
+        }
 
         auto disTh = Config::Get<double>("Plane.DistanceThreshold");
 
@@ -1021,11 +1050,20 @@ namespace ORB_SLAM2 {
 //            if (matched)
 //                continue;
 
+
             mvPlanePoints.push_back(*coarseCloud);
             mvPlaneCoefficients.push_back(coef);
-            planeDetector.NoPlaneAreaCloud.vertices.clear();
-            planeDetector.seg_img_.release();
-            planeDetector.color_img_.release();
+            for (auto &planepoint : (coarseCloud->points)) {
+                int i = 0;
+                p.x = planepoint.x;
+                p.y = planepoint.y;
+                p.z = planepoint.z;
+                meshCloud->points.push_back(p);
+            }
+
+//            planeDetector.NoPlaneAreaCloud.vertices.clear();
+//            planeDetector.seg_img_.release();
+//            planeDetector.color_img_.release();
         }
 
 ////        int r = 107;
@@ -1049,6 +1087,10 @@ namespace ORB_SLAM2 {
 //        }
 //
 //        PlaneViewer::cloudPoints = printCloud;
+        if (meshCloud->points.size() > 0) {
+            pcl::PolygonMesh cloud_mesh;
+            pcl::io::savePLYFile("/home/nuc/second.ply", *meshCloud);
+        }
     }
 
     void Frame::ExtractInseg(const cv::Mat& rgb_image, const cv::Mat& depth_image,

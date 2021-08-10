@@ -58,7 +58,7 @@ void Viewer::Run()
         mbFinished = false;
         mbStopped = false;
 
-        pangolin::CreateWindowAndBind("ManhattanSLAM: 3D Map", 1024, 768);
+        pangolin::CreateWindowAndBind("MetaSLAM: sparse 3D Map", 1024, 768);
 
         // 3D Mouse handler requires depth testing to be enabled
         glEnable(GL_DEPTH_TEST);
@@ -76,6 +76,7 @@ void Viewer::Run()
         pangolin::Var<bool> menuShowPlanes("menu.Show Planes",true,true);
         pangolin::Var<bool> menuShowSurfels("menu.Show Surfels",true,true);
         pangolin::Var<bool> menuShowNoPlaneArea("menu.ShowNoPlaneArea",true,true);
+        pangolin::Var<bool> menuShowCrossPoints("menu.ShowCrossPoints",true,true);
         pangolin::Var<bool> menuShowKeyFrames("menu.Show KeyFrames",true,true);
         pangolin::Var<bool> menuShowGraph("menu.Show Graph",true,true);
         pangolin::Var<bool> menuLocalizationMode("menu.Localization Mode",false,true);
@@ -151,23 +152,26 @@ void Viewer::Run()
             if(menuShowPlanes)
                 mpMapDrawer->DrawMapPlanes();
 //                mpMapDrawer->DrawMapPlaneBoundaries();
-//            if (menuShowNoPlaneArea)
+            if (menuShowNoPlaneArea)
 //                mpMapDrawer->DrawNoPlaneArea();
+                mpMapDrawer->DrawNonPlaneArea();
+                mpMapDrawer->SaveMeshMode("/home/nuc/first.ply");
+
             if (menuShowPlaneIntersections)
                 mpMapDrawer->DrawPlaneIntersections();
 //            if (menuShowInlierLines)
 //                mpMapDrawer->DrawInlierLines();
             if(menuShowSurfels)
 //                mpMapDrawer->DrawSurfels();
-//            if (menuShowCrossPoints)
-//                mpMapDrawer->DrawCrossPoint();
+            if (menuShowCrossPoints)
+                mpMapDrawer->DrawCrossPointInMap();
 //            if (menuShowCrossLines)
 //                mpMapDrawer->DrawCrossLine();
 
             pangolin::FinishFrame();
 
             cv::Mat im = mpFrameDrawer->DrawFrame();
-            cv::imshow("ManhattanSLAM: Current Frame", im);
+            cv::imshow("MetaSLAM: Current Frame", im);
             cv::waitKey(mT);
 
             if(menuReset)
@@ -179,6 +183,7 @@ void Viewer::Run()
                 menuShowPlanes = true;
                 menuShowBoundaryPoints = true;
                 menuShowNoPlaneArea = true;
+                menuShowCrossPoints = true;
                 menuLocalizationMode = false;
                 if(bLocalizationMode)
                     mpSystem->DeactivateLocalizationMode();

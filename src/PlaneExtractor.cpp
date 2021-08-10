@@ -81,6 +81,7 @@ cv::Mat PlaneDetection::runPlaneDetection()
             }
         }
     }
+//    seg_img_.at<cv::Vec3b>()
     static cv::Mat kernel_erode = getStructuringElement(cv::MORPH_RECT, cv::Size(3, 5));
     erode(mask_img, mask_img, kernel_erode);
 
@@ -93,8 +94,9 @@ cv::Mat PlaneDetection::runPlaneDetection()
     static cv::Mat kernel_erode2 = getStructuringElement(cv::MORPH_RECT, cv::Size(3, 5));
     erode(mask_img, mask_img, kernel_erode2);
 //    cv::GaussianBlur(mask_img, mask_img, cv::Size(3,3), 0.5, 0.5);
-//    imwrite("/home/nuc/NYU2/mask/"+to_string(number)+".png", mask_img);
-//    number ++ ;
-//    cout << "number is " << "    " << number << endl;
+    imwrite("/home/nuc/NYU2/mask/"+to_string(number)+".png", mask_img);
+    imwrite("/home/nuc/NYU2/seg_img/"+ to_string(number)+".png", seg_img_);
+    number ++ ;
+    cout << "number is " << "    " << number << endl;
     return mask_img;
 }

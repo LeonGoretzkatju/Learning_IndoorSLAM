@@ -429,6 +429,11 @@ namespace ORB_SLAM2 {
                 mState = OK;
             else
                 mState = LOST;
+            // just for test in 2021.08.09
+            //This function is used to compute the NonPlaneArea in CurrentFrame
+            PointCloud::Ptr combinedPoints (new PointCloud());
+            ComputeNonPlaneAreaInCurrentFrame(combinedPoints);
+
 
             // Update drawer
             mpFrameDrawer->Update(this);
@@ -440,12 +445,16 @@ namespace ORB_SLAM2 {
                 MapPlane *pMP = mCurrentFrame.mvpMapPlanes[i];
                 if (pMP) {
                     pMP->UpdateCoefficientsAndPoints(mCurrentFrame, i);
-                    mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 1.7, 0.41);
+                    mpMap->ComputeCrossLine(mpMap->GetAllMapPlanes(), 3.5, 0.55);
+                    mpMap->ComputeCrossPoint(mpMap->GetAllMapPlanes(), 2.5, 0.1);
                     // pMP->UpdateComputePlaneBoundary(mCurrentFrame, i);
                 } else if (!mCurrentFrame.mvbPlaneOutlier[i]) {
                     mCurrentFrame.mbNewPlane = true;
                 }
             }
+
+            cout << "Current Frame Camera Center" << mCurrentFrame.GetCameraCenter() << endl;
+            ComputeCameraCenterToPlaneAndCompletion(combinedPoints, 53.5);
             
             if (bOK) {
                 // Update motion model
@@ -2622,6 +2631,79 @@ namespace ORB_SLAM2 {
         if (pKFmax) {
             mpReferenceKF = pKFmax;
             mCurrentFrame.mpReferenceKF = mpReferenceKF;
+        }
+    }
+
+    void Tracking::ComputeNonPlaneAreaInCurrentFrame(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> &combinedPoints) {
+//        PointCloud::Ptr combinedPoints (new PointCloud());
+//        PointCloud::Ptr combinedNoPlanePoints(new PointCloud());
+        Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat( mCurrentFrame.mTcw );
+//        cout << "frame no plane observation size" << pF.mvNoPlanePoints[id].size() << endl;
+        pcl::transformPointCloud(mCurrentFrame.mvNoPlanePoints, *combinedPoints, T.inverse().matrix());
+        mpMap->AddNonPlaneArea(*combinedPoints);
+    }
+
+    void Tracking::ComputeCameraCenterToPlaneAndCompletion(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> &combinedPoints, float threshold) {
+        cout << "enter compute the camera center intersection " << endl;
+        auto verThreshold = Config::Get<double>("Plane.MFVerticalThreshold");
+        cv::Mat CameraCenter = mCurrentFrame.GetCameraCenter();
+        cv::Mat DirectionVector;
+        cv::Mat ParameterVector;
+        for (auto& p : *combinedPoints) {
+            float base = sqrt(pow((p.x - CameraCenter.at<float>(0)), 2) + pow((p.y - CameraCenter.at<float>(1)), 2) + pow((p.z - CameraCenter.at<float>(2)), 2));
+            DirectionVector = (cv::Mat_<float>(3, 1) << (p.x - CameraCenter.at<float>(0)) / base,
+                    (p.y - CameraCenter.at<float>(1)) / base,
+                    (p.z - CameraCenter.at<float>(2)) / base);
+            ParameterVector = (cv::Mat_<float>(3, 1) << (p.x - CameraCenter.at<float>(0)),
+                    (p.y - CameraCenter.at<float>(1)),
+                    (p.z - CameraCenter.at<float>(2)));
+            for (auto& vMP: mpMap->GetAllMapPlanes()) {
+                cv::Mat plane1 = vMP->GetWorldPos();
+                auto planePoint = vMP->mvPlanePoints->points[5];
+                float angle12 = plane1.at<float>(0,0)*DirectionVector.at<float>(0,0) +
+                                plane1.at<float>(1,0)*DirectionVector.at<float>(1,0)+
+                                plane1.at<float>(2,0)*DirectionVector.at<float>(2,0);
+//                if(angle12 <= verThreshold && angle12 >= -verThreshold)
+//                {
+//                    continue;
+//                }
+//                else
+//                {
+                    float B = -(plane1.at<float>(0,0)*p.x + plane1.at<float>(1,0)*p.y +
+                            plane1.at<float>(2,0)*p.z + plane1.at<float>(3,0));
+                    float C = (planePoint.x - CameraCenter.at<float>(0))*plane1.at<float>(0,0) +
+                            (planePoint.y - CameraCenter.at<float>(1))*plane1.at<float>(1,0) +
+                            (planePoint.z - CameraCenter.at<float>(2))*plane1.at<float>(2,0);
+                    float t = C / angle12;
+                    float x = CameraCenter.at<float>(0) - DirectionVector.at<float>(0,0) * t;
+                    float y = CameraCenter.at<float>(1) - DirectionVector.at<float>(1,0) * t;
+                    float z = CameraCenter.at<float>(2) - DirectionVector.at<float>(2,0) * t;
+                    float distance = sqrt(pow(DirectionVector.at<float>(0,0) * t, 2) +
+                            pow(DirectionVector.at<float>(1,0) * t, 2) +
+                            pow(DirectionVector.at<float>(2,0) * t, 2));
+                    cout << "test distance camera center" << "      " << distance << endl;
+                    float result = plane1.at<float>(0,0) * x + plane1.at<float>(1,0) * y + plane1.at<float>(2,0) * z +
+                            plane1.at<float>(3,0);
+                    float minDistance = plane1.at<float>(0,0) * CameraCenter.at<float>(0) +
+                                        plane1.at<float>(1,0) * CameraCenter.at<float>(1) +
+                                        plane1.at<float>(2,0) * CameraCenter.at<float>(2);
+                    if (distance >= (minDistance - 3.0) && distance <= (minDistance + 3.0) )
+                    {
+                        pcl::PointXYZRGB p;
+                        p.x = x;
+                        p.y = y;
+                        p.z = z;
+                        vMP->mvPlanePoints->points.emplace_back(p);
+                    }
+//                    for (int m = 0; m < vMP->mvPlanePoints->points.size(); ++m) {
+//                        cout << "x coordinate of plane points" << vMP->mvPlanePoints->points[m].x << endl;
+//                        cout << "y coordinate of plane points" << vMP->mvPlanePoints->points[m].y << endl;
+//                        cout << "z coordinate of plane points" << vMP->mvPlanePoints->points[m].z << endl;
+//                    }
+
+//                }
+
+            }
         }
     }
 

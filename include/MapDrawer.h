@@ -25,6 +25,12 @@
 #include"MapPoint.h"
 #include"KeyFrame.h"
 #include<pangolin/pangolin.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/io/ply_io.h>
+#include <pcl/point_types.h>
+#include <pcl/common/io.h>
+#include <pcl/impl/point_types.hpp>
+#include <pcl/point_cloud.h>
 
 #include<mutex>
 
@@ -45,10 +51,13 @@ public:
     void DrawInlierLines();
     void DrawBoundaryPoints();
     void DrawPlaneIntersections();
+    void DrawNonPlaneArea();
+    void SaveMeshMode(const string& filename);
     void DrawMapPlaneBoundaries();
     void DrawSurfels();
     void DrawCrossLine();
     void DrawCrossPoint();
+    void DrawCrossPointInMap();
     void DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph);
     void DrawCurrentCamera(pangolin::OpenGlMatrix &Twc);
     void SetCurrentCameraPose(const cv::Mat &Tcw);

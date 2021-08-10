@@ -105,6 +105,7 @@ namespace ORB_SLAM2
 
         void AddKeyFrame(KeyFrame* pKF);
         void AddMapPoint(MapPoint* pMP);
+        void ComputeCrossPoint(const std::vector<MapPlane*> &vpMapPlanes, double threshold, double threshold1);
         void ComputeCrossLine(const std::vector<MapPlane*> &vpMapPlanes, double threshold, double threshold1);
         double PointDistanceFromPlane(const cv::Mat &plane, PointCloud::Ptr pointCloud, double minSize);
         double PointToPlaneDistance(const cv::Mat &plane, pcl::PointXYZRGB &point);
@@ -180,10 +181,16 @@ namespace ORB_SLAM2
         void AddDirectionVector(Eigen::Matrix<double, 3, 1> &DirectionVector);
         void JudgeSimilarityDirectionVector(Eigen::Matrix<double, 3, 1> &DirectionVector, Eigen::Matrix<double ,6 , 1> &boundaryLine);
 
+        void AddNonPlaneArea(pcl::PointCloud<pcl::PointXYZRGB> &NonPlaneArea);
+
+        void AddCrossPoint(cv::Mat& CrossPoint);
+        std::vector<cv::Mat> GetAllCrossPointInMap();
+
         std::vector<SurfelElement> mvLocalSurfels;
         std::vector<SurfelElement> mvInactiveSurfels;
-
+        pcl::PointCloud<pcl::PointXYZRGB> DrawNonPlaneArea;
     protected:
+//        pcl::PointCloud<pcl::PointXYZRGB> DrawNonPlaneArea;
         std::tuple<unsigned long,unsigned long,cv::Mat> CrossLineSet;
         vector<cv::Mat> CrossLineDraw;
         vector<std::tuple<unsigned long,unsigned long,cv::Mat>> CrossLineSets;
@@ -195,6 +202,7 @@ namespace ORB_SLAM2
 
         std::set<MapLine*> mspMapLines;
         std::vector<Eigen::Matrix<double ,6 , 1>> mspBoundaryLines;
+        std::vector<cv::Mat> mspCrossPoints;
         std::vector<Eigen::Matrix<double ,3 , 1>> mspDirectionVector;
         std::vector<pcl::PointXYZRGB> BoundaryPoints;
         std::vector<pcl::PointXYZRGB> InlierLines;

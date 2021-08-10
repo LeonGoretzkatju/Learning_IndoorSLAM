@@ -335,30 +335,15 @@ namespace ORB_SLAM2 {
         mspBoundaryLines.emplace_back(boundaryLine);
     }
 
+    void Map::AddCrossPoint(cv::Mat& CrossPoint) {
+        unique_lock<mutex> lock(mMutexMap);
+        mspCrossPoints.emplace_back(CrossPoint);
+    }
+
     void Map::AddDirectionVector(Eigen::Matrix<double, 3, 1> &DirectionVector) {
         unique_lock<mutex> lock(mMutexMap);
         mspDirectionVector.emplace_back(DirectionVector);
     }
-
-//    void JudgeSimilarityDirectionVector(Eigen::Matrix<double, 3, 1> &DirectionVector, Eigen::Matrix<double ,6 , 1> &boundaryLine) {
-////        unique_lock<mutex> lock(mMutexMap);
-//        cout << "stop at there" << endl;
-//        cout <<"mspDirectionvector size" << "     " << mspDirectionVector.size() << endl;
-//        for (int i = 0; i < mspBoundaryLines.size(); ++i) {
-//            float angle = DirectionVector[0]*mspDirectionVector[i][0] + DirectionVector[1]*mspDirectionVector[i][1] + DirectionVector[2]*mspDirectionVector[i][2];
-////            cout <<"angle of direction vector" << "     " <<angle <<endl;
-//            if (abs(angle) > 0.8)
-//            {
-//                continue;
-//            }
-//            else
-//            {
-//                mspDirectionVector.emplace_back(DirectionVector);
-//                mspBoundaryLines.emplace_back(boundaryLine);
-////                cout << "finish emplace back" << endl;
-//            }
-//        }
-//    }
 
     void Map::EraseMapLine(MapLine *pML) {
         unique_lock<mutex> lock(mMutexMap);
@@ -382,6 +367,11 @@ namespace ORB_SLAM2 {
     vector<Eigen::Matrix<double ,6 , 1>> Map::GetAllPlaneIntersections() {
         unique_lock<mutex> lock(mMutexMap);
         return vector<Eigen::Matrix<double ,6 , 1>>(mspBoundaryLines.begin(), mspBoundaryLines.end());
+    }
+
+    vector<cv::Mat> Map::GetAllCrossPointInMap() {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<cv::Mat>(mspCrossPoints.begin(), mspCrossPoints.end());
     }
 
     vector<MapLine *> Map::GetReferenceMapLines() {
@@ -444,6 +434,65 @@ namespace ORB_SLAM2 {
         return dis;
     }
 
+    void Map::ComputeCrossPoint(const std::vector<MapPlane *> &vpMapPlanes, double threshold, double threshold1) {
+        auto verThreshold = Config::Get<double>("Plane.MFVerticalThreshold");
+        for (int i = 0; i < vpMapPlanes.size(); ++i) {
+            if (!vpMapPlanes[i] || vpMapPlanes[i]->isBad()) {
+                continue;
+            }
+            for (int j = i + 1; j < vpMapPlanes.size(); ++j) {
+                int minSize = min(vpMapPlanes[i]->mvPlanePoints->points.size(),vpMapPlanes[j]->mvPlanePoints->points.size());
+                cv::Mat plane1 = vpMapPlanes[i]->GetWorldPos();
+                cv::Mat plane2 = vpMapPlanes[j]->GetWorldPos();
+                if (!vpMapPlanes[j] || vpMapPlanes[j]->isBad()) {
+                    continue;
+                }
+                float angle12 = plane1.at<float>(0,0)*plane2.at<float>(0,0) + plane1.at<float>(1,0)*plane2.at<float>(1,0)+
+                              plane1.at<float>(2,0)*plane2.at<float>(2,0);
+                double dis = PointDistanceFromPlane(plane1,vpMapPlanes[j]->mvPlanePoints, minSize);
+                cout << "total distance" << "                    " <<dis <<endl;
+                cout << "total angle" << "           " <<angle12 <<endl;
+                if ( (angle12 <= verThreshold && angle12 >= -verThreshold) || dis < threshold)
+                {
+                    for (int k = j+1; k < vpMapPlanes.size(); ++k) {
+                        cv::Mat plane3 = vpMapPlanes[k]->GetWorldPos();
+                        if (!vpMapPlanes[k] || vpMapPlanes[k]->isBad()) {
+                            continue;
+                        }
+                        float angle13 = plane1.at<float>(0) * plane3.at<float>(0) +
+                                        plane1.at<float>(1) * plane3.at<float>(1) +
+                                        plane1.at<float>(2) * plane3.at<float>(2);
+
+                        float angle23 = plane2.at<float>(0) * plane3.at<float>(0) +
+                                        plane2.at<float>(1) * plane3.at<float>(1) +
+                                        plane2.at<float>(2) * plane3.at<float>(2);
+                        if (angle13 > verThreshold || angle13 < -verThreshold || angle23 > verThreshold || angle23 < -verThreshold) {
+                            continue;
+                        }
+                        cv::Mat A, b;
+                        A = cv::Mat::eye(cv::Size(3, 3), CV_32F);
+
+                        A.at<float>(0, 0) = plane1.at<float>(0);
+                        A.at<float>(1, 0) = plane2.at<float>(0);
+                        A.at<float>(2, 0) = plane3.at<float>(0);
+                        A.at<float>(0, 1) = plane1.at<float>(1);
+                        A.at<float>(1, 1) = plane2.at<float>(1);
+                        A.at<float>(2, 1) = plane3.at<float>(1);
+                        A.at<float>(0, 2) = plane1.at<float>(2);
+                        A.at<float>(1, 2) = plane2.at<float>(2);
+                        A.at<float>(2, 2) = plane3.at<float>(2);
+//                        A = A.t() * A;
+                        b = (cv::Mat_<float>(3, 1) << -plane1.at<float>(2), -plane2.at<float>(2), -plane3.at<float>(2));
+//                        b = A.t() * b;
+                        cv::Mat CrossPoint = A.inv() * b;
+                        AddCrossPoint(CrossPoint);
+
+                    }
+                }
+            }
+        }
+    }
+
     void Map::ComputeCrossLine(const std::vector<MapPlane*> &vpMapPlanes, double threshold, double threshold1) {
 //        unique_lock<mutex> lock(mMutexMap); threshold 2.0 2.5 .etc
 //        PointCloud::Ptr boundary (new PointCloud());
@@ -454,7 +503,7 @@ namespace ORB_SLAM2 {
                 cv::Mat p1 = vpMapPlanes[i]->GetWorldPos();
                 cv::Mat p2 = vpMapPlanes[j]->GetWorldPos();
                 float angle = p1.at<float>(0,0)*p2.at<float>(0,0) + p1.at<float>(1,0)*p2.at<float>(1,0)+
-                              p1.at<float>(2,0)*p1.at<float>(2,0);
+                              p1.at<float>(2,0)*p2.at<float>(2,0);
 //                cout << "plane parameter p1" << "            " <<p1 <<endl;
 //                cout << "v1pmapplane size" <<vpMapPlanes[j]->mvPlanePoints->points.size() << endl;
                 double dis = PointDistanceFromPlane(p1,vpMapPlanes[j]->mvPlanePoints, minSize);
@@ -837,6 +886,11 @@ namespace ORB_SLAM2 {
         CrossPointSet = std::make_tuple(pMP1->mnId,pMP2->mnId,pMP3->mnId,CrossPoint);
         CrossPointDraw.emplace_back(CrossPoint);
         CrossPointSets.emplace_back(CrossPointSet);
+    }
+
+    void Map::AddNonPlaneArea(pcl::PointCloud<pcl::PointXYZRGB> &NonPlaneArea) {
+        unique_lock<mutex> lock(mMutexMap);
+        DrawNonPlaneArea = NonPlaneArea;
     }
 
     void Map::AddPairPlanesObservation(MapPlane *pMP1, MapPlane *pMP2, KeyFrame* pKF) {
